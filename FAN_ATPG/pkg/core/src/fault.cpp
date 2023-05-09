@@ -99,6 +99,9 @@ void FaultListExtract::extractFaultFromCircuit(Circuit *pCircuit)
 					case Gate::AND2:
 					case Gate::AND3:
 					case Gate::AND4:
+					case Gate::AND5:
+					case Gate::AND8:
+					case Gate::AND9:
 						for (int j = 0; j < pCircuit->circuitGates_[i].numFI_; ++j)
 						{
 							SA0EquivalentOfInput = SA0Equivalent[pCircuit->circuitGates_[i].faninVector_[j]];
@@ -123,6 +126,7 @@ void FaultListExtract::extractFaultFromCircuit(Circuit *pCircuit)
 					case Gate::OR2:
 					case Gate::OR3:
 					case Gate::OR4:
+					case Gate::OR5:
 						for (int j = 0; j < pCircuit->circuitGates_[i].numFI_; ++j)
 						{
 							SA0EquivalentOfInput = SA0Equivalent[pCircuit->circuitGates_[i].faninVector_[j]];

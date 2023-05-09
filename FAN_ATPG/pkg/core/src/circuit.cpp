@@ -485,6 +485,18 @@ void Circuit::determineGateType(const int &gateID, const Cell *const cell,
 			{
 				circuitGates_[gateID].gateType_ = Gate::AND4;
 			}
+			else if (cell->getNPort() == 6)
+			{
+				circuitGates_[gateID].gateType_ = Gate::AND5;
+			}
+			else if (cell->getNPort() == 9)
+			{
+				circuitGates_[gateID].gateType_ = Gate::AND8;
+			}
+			else if (cell->getNPort() == 10)
+			{
+				circuitGates_[gateID].gateType_ = Gate::AND9;
+			}
 			else
 			{
 				circuitGates_[gateID].gateType_ = Gate::NA;
@@ -520,6 +532,10 @@ void Circuit::determineGateType(const int &gateID, const Cell *const cell,
 			else if (cell->getNPort() == 5)
 			{
 				circuitGates_[gateID].gateType_ = Gate::OR4;
+			}
+			else if (cell->getNPort() == 6)
+			{
+				circuitGates_[gateID].gateType_ = Gate::OR5;
 			}
 			else
 			{

@@ -2893,7 +2893,7 @@ int Atpg::setFaultyGate(Fault &fault)
 
 		backtrackImplicatedGateIDs_.push_back(pFaultyLine->gateId_);
 
-		if (pFaultyGate->gateType_ == Gate::AND2 || pFaultyGate->gateType_ == Gate::AND3 || pFaultyGate->gateType_ == Gate::AND4 || pFaultyGate->gateType_ == Gate::NAND2 || pFaultyGate->gateType_ == Gate::NAND3 || pFaultyGate->gateType_ == Gate::NAND4 || pFaultyGate->gateType_ == Gate::NOR2 || pFaultyGate->gateType_ == Gate::NOR3 || pFaultyGate->gateType_ == Gate::NOR4 || pFaultyGate->gateType_ == Gate::OR2 || pFaultyGate->gateType_ == Gate::OR3 || pFaultyGate->gateType_ == Gate::OR4)
+		if (pFaultyGate->gateType_ == Gate::AND2 || pFaultyGate->gateType_ == Gate::AND3 || pFaultyGate->gateType_ == Gate::AND4 || pFaultyGate->gateType_ == Gate::AND5 || pFaultyGate->gateType_ == Gate::AND8 || pFaultyGate->gateType_ == Gate::AND9 || pFaultyGate->gateType_ == Gate::NAND2 || pFaultyGate->gateType_ == Gate::NAND3 || pFaultyGate->gateType_ == Gate::NAND4 || pFaultyGate->gateType_ == Gate::NOR2 || pFaultyGate->gateType_ == Gate::NOR3 || pFaultyGate->gateType_ == Gate::NOR4 || pFaultyGate->gateType_ == Gate::OR2 || pFaultyGate->gateType_ == Gate::OR3 || pFaultyGate->gateType_ == Gate::OR4 || pFaultyGate->gateType_ == Gate::OR5)
 		{
 			// scan all fanin gate of pFaultyGate
 			bool isFaultyGateScanned = false;
@@ -3496,6 +3496,9 @@ Value Atpg::assignBacktraceValue(int &n0, int &n1, const Gate &gate)
 		case Gate::AND2:
 		case Gate::AND3:
 		case Gate::AND4:
+		case Gate::AND5:
+		case Gate::AND8:
+		case Gate::AND9:
 			n0 = gateID_to_n0_[gate.gateId_];
 			n1 = gateID_to_n1_[gate.gateId_];
 			return L;
@@ -3504,6 +3507,7 @@ Value Atpg::assignBacktraceValue(int &n0, int &n1, const Gate &gate)
 		case Gate::OR2:
 		case Gate::OR3:
 		case Gate::OR4:
+		case Gate::OR5:
 			// TO-DO homework 04
 			n0 = gateID_to_n0_[gate.gateId_];
 			n1 = gateID_to_n1_[gate.gateId_];
@@ -3642,6 +3646,9 @@ void Atpg::initializeForMultipleBacktrace()
 				case Gate::AND2:
 				case Gate::AND3:
 				case Gate::AND4:
+				case Gate::AND5:
+				case Gate::AND8:
+				case Gate::AND9:
 				case Gate::NOR2:
 				case Gate::NOR3:
 				case Gate::NOR4:
@@ -3652,6 +3659,7 @@ void Atpg::initializeForMultipleBacktrace()
 				case Gate::OR2:
 				case Gate::OR3:
 				case Gate::OR4:
+				case Gate::OR5:
 				case Gate::NAND2:
 				case Gate::NAND3:
 				case Gate::NAND4:
@@ -4301,6 +4309,9 @@ void Atpg::calSCOAP()
 			case Gate::AND2:
 			case Gate::AND3:
 			case Gate::AND4:
+			case Gate::AND5:
+			case Gate::AND8:
+			case Gate::AND9:
 				for (int j = 0; j < gate.numFI_; ++j)
 				{
 					Gate &gateInput = pCircuit_->circuitGates_[gate.faninVector_[j]];
@@ -4331,6 +4342,7 @@ void Atpg::calSCOAP()
 			case Gate::OR2:
 			case Gate::OR3:
 			case Gate::OR4:
+			case Gate::OR5:
 				for (int j = 0; j < gate.numFI_; ++j)
 				{
 					Gate &gateInput = pCircuit_->circuitGates_[gate.faninVector_[j]];
@@ -4462,6 +4474,9 @@ void Atpg::calSCOAP()
 			case Gate::AND2:
 			case Gate::AND3:
 			case Gate::AND4:
+			case Gate::AND5:
+			case Gate::AND8:
+			case Gate::AND9:
 			case Gate::NAND2:
 			case Gate::NAND3:
 			case Gate::NAND4:
@@ -4478,6 +4493,7 @@ void Atpg::calSCOAP()
 			case Gate::OR2:
 			case Gate::OR3:
 			case Gate::OR4:
+			case Gate::OR5:
 			case Gate::NOR2:
 			case Gate::NOR3:
 			case Gate::NOR4:

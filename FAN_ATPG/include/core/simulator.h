@@ -44,22 +44,22 @@ namespace CoreNs
 
 	private:
 		// Used by both parallel fault and parallel pattern simulation.
-		Circuit *pCircuit_;                   // The circuit use in simulator.
-		int numDetection_;                    // For n-detect.
-		int numRecover_;                      // Number of recovers needed.
+		Circuit *pCircuit_;										// The circuit use in simulator.
+		int numDetection_;										// For n-detect.
+		int numRecover_;											// Number of recovers needed.
 		std::vector<std::stack<int>> events_; // The event stacks for every circuit levels.
-		std::vector<int> processed_;          // Array of processed flags. 1 means this gate is processed.
-		std::vector<int> recoverGates_;       // Array of gates to be recovered from the last fault injection.
+		std::vector<int> processed_;					// Array of processed flags. 1 means this gate is processed.
+		std::vector<int> recoverGates_;				// Array of gates to be recovered from the last fault injection.
 		// This is to inject fault into the circuit.
 		// faultInjectLow_ = 1 faultInjectHigh_ = 0 means we inject a stuck-at zero fault.
 		// faultInjectLow_ = 0 faultInjectHigh_ = 1 means we inject a stuck-at one fault.
 		// We use 5 ParallelValues since a gate have 1 fanout and at most 4 fanins.
-		std::vector<std::array<ParallelValue, 5>> faultInjectLow_;
-		std::vector<std::array<ParallelValue, 5>> faultInjectHigh_;
+		std::vector<std::array<ParallelValue, 10>> faultInjectLow_;
+		std::vector<std::array<ParallelValue, 10>> faultInjectHigh_;
 
 		// Used by parallel fault simulation.
 		FaultPtrListIter injectedFaults_[WORD_SIZE]; // The injected faults, used for erase detected faults.
-		int numInjectedFaults_;                      // The number of injected faults.
+		int numInjectedFaults_;											 // The number of injected faults.
 		// Used by parallel pattern simulation.
 		ParallelValue activated_; // Record which pattern is activated.
 
@@ -84,8 +84,8 @@ namespace CoreNs
 				events_(pCircuit->totalLvl_),
 				processed_(pCircuit->totalGate_, 0),
 				recoverGates_(pCircuit->totalGate_),
-				faultInjectLow_(pCircuit->totalGate_, std::array<ParallelValue, 5>({0, 0, 0, 0, 0})),
-				faultInjectHigh_(pCircuit->totalGate_, std::array<ParallelValue, 5>({0, 0, 0, 0, 0})),
+				faultInjectLow_(pCircuit->totalGate_, std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0})),
+				faultInjectHigh_(pCircuit->totalGate_, std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0})),
 				numInjectedFaults_(0),
 				activated_(PARA_L)
 	{
@@ -167,6 +167,11 @@ namespace CoreNs
 		const int fanin2 = pCircuit_->circuitGates_[gateID].numFI_ > 1 ? pCircuit_->circuitGates_[gateID].faninVector_[1] : 0;
 		const int fanin3 = pCircuit_->circuitGates_[gateID].numFI_ > 2 ? pCircuit_->circuitGates_[gateID].faninVector_[2] : 0;
 		const int fanin4 = pCircuit_->circuitGates_[gateID].numFI_ > 3 ? pCircuit_->circuitGates_[gateID].faninVector_[3] : 0;
+		const int fanin5 = pCircuit_->circuitGates_[gateID].numFI_ > 4 ? pCircuit_->circuitGates_[gateID].faninVector_[4] : 0;
+		const int fanin6 = pCircuit_->circuitGates_[gateID].numFI_ > 5 ? pCircuit_->circuitGates_[gateID].faninVector_[5] : 0;
+		const int fanin7 = pCircuit_->circuitGates_[gateID].numFI_ > 6 ? pCircuit_->circuitGates_[gateID].faninVector_[6] : 0;
+		const int fanin8 = pCircuit_->circuitGates_[gateID].numFI_ > 7 ? pCircuit_->circuitGates_[gateID].faninVector_[7] : 0;
+		const int fanin9 = pCircuit_->circuitGates_[gateID].numFI_ > 8 ? pCircuit_->circuitGates_[gateID].faninVector_[8] : 0;
 		// Read the value of fanins.
 		const ParallelValue &l1 = pCircuit_->circuitGates_[fanin1].goodSimLow_;
 		const ParallelValue &h1 = pCircuit_->circuitGates_[fanin1].goodSimHigh_;
@@ -176,6 +181,16 @@ namespace CoreNs
 		const ParallelValue &h3 = pCircuit_->circuitGates_[fanin3].goodSimHigh_;
 		const ParallelValue &l4 = pCircuit_->circuitGates_[fanin4].goodSimLow_;
 		const ParallelValue &h4 = pCircuit_->circuitGates_[fanin4].goodSimHigh_;
+		const ParallelValue &l5 = pCircuit_->circuitGates_[fanin5].goodSimLow_;
+		const ParallelValue &h5 = pCircuit_->circuitGates_[fanin5].goodSimHigh_;
+		const ParallelValue &l6 = pCircuit_->circuitGates_[fanin6].goodSimLow_;
+		const ParallelValue &h6 = pCircuit_->circuitGates_[fanin6].goodSimHigh_;
+		const ParallelValue &l7 = pCircuit_->circuitGates_[fanin7].goodSimLow_;
+		const ParallelValue &h7 = pCircuit_->circuitGates_[fanin7].goodSimHigh_;
+		const ParallelValue &l8 = pCircuit_->circuitGates_[fanin8].goodSimLow_;
+		const ParallelValue &h8 = pCircuit_->circuitGates_[fanin8].goodSimHigh_;
+		const ParallelValue &l9 = pCircuit_->circuitGates_[fanin9].goodSimLow_;
+		const ParallelValue &h9 = pCircuit_->circuitGates_[fanin9].goodSimHigh_;
 		// Evaluate the good value of gate's output.
 		switch (pCircuit_->circuitGates_[gateID].gateType_)
 		{
@@ -201,6 +216,18 @@ namespace CoreNs
 				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 | l2 | l3 | l4;
 				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 & h2 & h3 & h4;
 				break;
+			case Gate::AND5:
+				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 | l2 | l3 | l4 | l5;
+				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 & h2 & h3 & h4 & h5;
+				break;
+			case Gate::AND8:
+				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 | l2 | l3 | l4 | l5 | l6 | l7 | l8;
+				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 & h2 & h3 & h4 & h5 & h6 & h7 & h8;
+				break;
+			case Gate::AND9:
+				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 | l2 | l3 | l4 | l5 | l6 | l7 | l8 | l9;
+				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 & h2 & h3 & h4 & h5 & h6 & h7 & h8 & h9;
+				break;
 			case Gate::NAND2:
 				pCircuit_->circuitGates_[gateID].goodSimLow_ = h1 & h2;
 				pCircuit_->circuitGates_[gateID].goodSimHigh_ = l1 | l2;
@@ -224,6 +251,10 @@ namespace CoreNs
 			case Gate::OR4:
 				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 & l2 & l3 & l4;
 				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 | h2 | h3 | h4;
+				break;
+			case Gate::OR5:
+				pCircuit_->circuitGates_[gateID].goodSimLow_ = l1 & l2 & l3 & l4 & l5;
+				pCircuit_->circuitGates_[gateID].goodSimHigh_ = h1 | h2 | h3 | h4 | h5;
 				break;
 			case Gate::NOR2:
 				pCircuit_->circuitGates_[gateID].goodSimLow_ = h1 | h2;
@@ -305,6 +336,11 @@ namespace CoreNs
 		const int fanin2 = pCircuit_->circuitGates_[gateID].numFI_ > 1 ? pCircuit_->circuitGates_[gateID].faninVector_[1] : 0;
 		const int fanin3 = pCircuit_->circuitGates_[gateID].numFI_ > 2 ? pCircuit_->circuitGates_[gateID].faninVector_[2] : 0;
 		const int fanin4 = pCircuit_->circuitGates_[gateID].numFI_ > 3 ? pCircuit_->circuitGates_[gateID].faninVector_[3] : 0;
+		const int fanin5 = pCircuit_->circuitGates_[gateID].numFI_ > 4 ? pCircuit_->circuitGates_[gateID].faninVector_[4] : 0;
+		const int fanin6 = pCircuit_->circuitGates_[gateID].numFI_ > 5 ? pCircuit_->circuitGates_[gateID].faninVector_[5] : 0;
+		const int fanin7 = pCircuit_->circuitGates_[gateID].numFI_ > 6 ? pCircuit_->circuitGates_[gateID].faninVector_[6] : 0;
+		const int fanin8 = pCircuit_->circuitGates_[gateID].numFI_ > 7 ? pCircuit_->circuitGates_[gateID].faninVector_[7] : 0;
+		const int fanin9 = pCircuit_->circuitGates_[gateID].numFI_ > 8 ? pCircuit_->circuitGates_[gateID].faninVector_[8] : 0;
 		// Read the value of fanins with fault masking.
 		const ParallelValue l1 = (pCircuit_->circuitGates_[fanin1].faultSimLow_ & ~faultInjectHigh_[gateID][1]) | faultInjectLow_[gateID][1];
 		const ParallelValue h1 = (pCircuit_->circuitGates_[fanin1].faultSimHigh_ & ~faultInjectLow_[gateID][1]) | faultInjectHigh_[gateID][1];
@@ -314,6 +350,16 @@ namespace CoreNs
 		const ParallelValue h3 = (pCircuit_->circuitGates_[fanin3].faultSimHigh_ & ~faultInjectLow_[gateID][3]) | faultInjectHigh_[gateID][3];
 		const ParallelValue l4 = (pCircuit_->circuitGates_[fanin4].faultSimLow_ & ~faultInjectHigh_[gateID][4]) | faultInjectLow_[gateID][4];
 		const ParallelValue h4 = (pCircuit_->circuitGates_[fanin4].faultSimHigh_ & ~faultInjectLow_[gateID][4]) | faultInjectHigh_[gateID][4];
+		const ParallelValue l5 = (pCircuit_->circuitGates_[fanin5].faultSimLow_ & ~faultInjectHigh_[gateID][5]) | faultInjectLow_[gateID][5];
+		const ParallelValue h5 = (pCircuit_->circuitGates_[fanin5].faultSimHigh_ & ~faultInjectLow_[gateID][5]) | faultInjectHigh_[gateID][5];
+		const ParallelValue l6 = (pCircuit_->circuitGates_[fanin6].faultSimLow_ & ~faultInjectHigh_[gateID][6]) | faultInjectLow_[gateID][6];
+		const ParallelValue h6 = (pCircuit_->circuitGates_[fanin6].faultSimHigh_ & ~faultInjectLow_[gateID][6]) | faultInjectHigh_[gateID][6];
+		const ParallelValue l7 = (pCircuit_->circuitGates_[fanin7].faultSimLow_ & ~faultInjectHigh_[gateID][7]) | faultInjectLow_[gateID][7];
+		const ParallelValue h7 = (pCircuit_->circuitGates_[fanin7].faultSimHigh_ & ~faultInjectLow_[gateID][7]) | faultInjectHigh_[gateID][7];
+		const ParallelValue l8 = (pCircuit_->circuitGates_[fanin8].faultSimLow_ & ~faultInjectHigh_[gateID][8]) | faultInjectLow_[gateID][8];
+		const ParallelValue h8 = (pCircuit_->circuitGates_[fanin8].faultSimHigh_ & ~faultInjectLow_[gateID][8]) | faultInjectHigh_[gateID][8];
+		const ParallelValue l9 = (pCircuit_->circuitGates_[fanin9].faultSimLow_ & ~faultInjectHigh_[gateID][9]) | faultInjectLow_[gateID][9];
+		const ParallelValue h9 = (pCircuit_->circuitGates_[fanin9].faultSimHigh_ & ~faultInjectLow_[gateID][9]) | faultInjectHigh_[gateID][9];
 		// Evaluate the faulty value of gate's output.
 		switch (pCircuit_->circuitGates_[gateID].gateType_)
 		{
@@ -339,6 +385,18 @@ namespace CoreNs
 				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 | l2 | l3 | l4;
 				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 & h2 & h3 & h4;
 				break;
+			case Gate::AND5:
+				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 | l2 | l3 | l4 | l5;
+				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 & h2 & h3 & h4 & h5;
+				break;
+			case Gate::AND8:
+				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 | l2 | l3 | l4 | l5 | l6 | l7 | l8;
+				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 & h2 & h3 & h4 & h5 & h6 & h7 & h8;
+				break;
+			case Gate::AND9:
+				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 | l2 | l3 | l4 | l5 | l6 | l7 | l8 | l9;
+				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 & h2 & h3 & h4 & h5 & h6 & h7 & h8 & h9;
+				break;
 			case Gate::NAND2:
 				pCircuit_->circuitGates_[gateID].faultSimLow_ = h1 & h2;
 				pCircuit_->circuitGates_[gateID].faultSimHigh_ = l1 | l2;
@@ -362,6 +420,10 @@ namespace CoreNs
 			case Gate::OR4:
 				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 & l2 & l3 & l4;
 				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 | h2 | h3 | h4;
+				break;
+			case Gate::OR5:
+				pCircuit_->circuitGates_[gateID].faultSimLow_ = l1 & l2 & l3 & l4 & l5;
+				pCircuit_->circuitGates_[gateID].faultSimHigh_ = h1 | h2 | h3 | h4 | h5;
 				break;
 			case Gate::NOR2:
 				pCircuit_->circuitGates_[gateID].faultSimLow_ = h1 | h2;

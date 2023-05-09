@@ -1,0 +1,29 @@
+#                 Statistics Report
+#  Circuit name                                 C432
+#  Fault model                                   SAF
+#  Pattern type                                BASIC
+#  -------------------------------------------------
+#  Fault classes                             #faults
+#  ----------------------------  -------------------
+#    FU (full)                                  1490
+#    FU (collapsed)                              944
+#    --------------------------  -------------------
+#    UD (undetected)                            1310
+#    PT (possibly testable)                        0
+#    AU (atpg untestable)                          0
+#    RE (redundant)                                0
+#    AB (atpg abort)                               0
+#    TI (tied)                                     0
+#    --------------------------  -------------------
+#    DT (detected)                               180
+#  -------------------------------------------------
+#  Coverage                               percentage
+#    --------------------------  -------------------
+#    test coverage                            12.08%
+#    fault coverage                           12.08%
+#    atpg effectiveness                       12.08%
+#  -------------------------------------------------
+#  #Patterns                                      20
+#  -------------------------------------------------
+#  ATPG runtime                           0.001175 s
+#  -------------------------------------------------

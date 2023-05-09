@@ -185,12 +185,16 @@ namespace CoreNs
 		inline Value cAND2(const Value &i1, const Value &i2);
 		inline Value cAND3(const Value &i1, const Value &i2, const Value &i3);
 		inline Value cAND4(const Value &i1, const Value &i2, const Value &i3, const Value &i4);
+		inline Value cAND5(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5);
+		inline Value cAND8(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5, const Value &i6, const Value &i7, const Value &i8);
+		inline Value cAND9(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5, const Value &i6, const Value &i7, const Value &i8, const Value &i9);
 		inline Value cNAND2(const Value &i1, const Value &i2);
 		inline Value cNAND3(const Value &i1, const Value &i2, const Value &i3);
 		inline Value cNAND4(const Value &i1, const Value &i2, const Value &i3, const Value &i4);
 		inline Value cOR2(const Value &i1, const Value &i2);
 		inline Value cOR3(const Value &i1, const Value &i2, const Value &i3);
 		inline Value cOR4(const Value &i1, const Value &i2, const Value &i3, const Value &i4);
+		inline Value cOR5(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5);
 		inline Value cNOR2(const Value &i1, const Value &i2);
 		inline Value cNOR3(const Value &i1, const Value &i2, const Value &i3);
 		inline Value cNOR4(const Value &i1, const Value &i2, const Value &i3, const Value &i4);
@@ -258,7 +262,7 @@ namespace CoreNs
 			return gate.atpgVal_;
 		}
 
-		static Value v[4];
+		static Value v[9];
 		int index = 0;
 		for (const int &faninID : gate.faninVector_)
 		{
@@ -279,6 +283,12 @@ namespace CoreNs
 				return cAND3(v[0], v[1], v[2]);
 			case Gate::AND4:
 				return cAND4(v[0], v[1], v[2], v[3]);
+			case Gate::AND5:
+				return cAND5(v[0], v[1], v[2], v[3], v[4]);
+			case Gate::AND8:
+				return cAND8(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+			case Gate::AND9:
+				return cAND9(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
 			case Gate::NAND2:
 				return cNAND2(v[0], v[1]);
 			case Gate::NAND3:
@@ -291,6 +301,8 @@ namespace CoreNs
 				return cOR3(v[0], v[1], v[2]);
 			case Gate::OR4:
 				return cOR4(v[0], v[1], v[2], v[3]);
+			case Gate::OR5:
+				return cOR5(v[0], v[1], v[2], v[3], v[4]);
 			case Gate::NOR2:
 				return cNOR2(v[0], v[1]);
 			case Gate::NOR3:
@@ -375,6 +387,9 @@ namespace CoreNs
 			case Gate::AND2:
 			case Gate::AND3:
 			case Gate::AND4:
+			case Gate::AND5:
+			case Gate::AND8:
+			case Gate::AND9:
 				if (faultyLine == 0)
 				{
 					val = pCircuit_->circuitGates_[gate.faninVector_[0]].atpgVal_;
@@ -463,6 +478,7 @@ namespace CoreNs
 			case Gate::OR2:
 			case Gate::OR3:
 			case Gate::OR4:
+			case Gate::OR5:
 				if (faultyLine == 0)
 				{
 					val = pCircuit_->circuitGates_[gate.faninVector_[0]].atpgVal_;
@@ -917,6 +933,18 @@ namespace CoreNs
 	{
 		return cAND2(cAND2(i1, i2), cAND2(i3, i4));
 	}
+	inline Value Atpg::cAND5(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5)
+	{
+		return cAND2(cAND2(cAND2(i1, i2), cAND2(i3, i4)), i5);
+	}
+	inline Value Atpg::cAND8(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5, const Value &i6, const Value &i7, const Value &i8)
+	{
+		return cAND2(cAND2(cAND2(i1, i2), cAND2(i3, i4)), cAND2(cAND2(i5, i6), cAND2(i7, i8)));
+	}
+	inline Value Atpg::cAND9(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5, const Value &i6, const Value &i7, const Value &i8, const Value &i9)
+	{
+		return cAND2(cAND2(cAND2(cAND2(i1, i2), cAND2(i3, i4)), cAND2(cAND2(i5, i6), cAND2(i7, i8))), i9);
+	}
 	inline Value Atpg::cNAND2(const Value &i1, const Value &i2)
 	{
 		return cINV(cAND2(i1, i2));
@@ -950,6 +978,10 @@ namespace CoreNs
 	inline Value Atpg::cOR4(const Value &i1, const Value &i2, const Value &i3, const Value &i4)
 	{
 		return cOR2(cOR2(i1, i2), cOR2(i3, i4));
+	}
+	inline Value Atpg::cOR5(const Value &i1, const Value &i2, const Value &i3, const Value &i4, const Value &i5)
+	{
+		return cOR2(cOR2(cOR2(i1, i2), cOR2(i3, i4)), i5);
 	}
 	inline Value Atpg::cNOR2(const Value &i1, const Value &i2)
 	{

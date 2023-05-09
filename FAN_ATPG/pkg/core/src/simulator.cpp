@@ -285,8 +285,8 @@ void Simulator::parallelFaultReset()
 	}
 	numRecover_ = 0;
 	std::fill(processed_.begin(), processed_.end(), 0);
-	std::fill(faultInjectLow_.begin(), faultInjectLow_.end(), std::array<ParallelValue, 5>({0, 0, 0, 0, 0}));
-	std::fill(faultInjectHigh_.begin(), faultInjectHigh_.end(), std::array<ParallelValue, 5>({0, 0, 0, 0, 0}));
+	std::fill(faultInjectLow_.begin(), faultInjectLow_.end(), std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
+	std::fill(faultInjectHigh_.begin(), faultInjectHigh_.end(), std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
 
 	numInjectedFaults_ = 0;
 }
@@ -439,8 +439,8 @@ void Simulator::parallelPatternReset()
 	}
 	numRecover_ = 0;
 	std::fill(processed_.begin(), processed_.end(), 0);
-	std::fill(faultInjectLow_.begin(), faultInjectLow_.end(), std::array<ParallelValue, 5>({0, 0, 0, 0, 0}));
-	std::fill(faultInjectHigh_.begin(), faultInjectHigh_.end(), std::array<ParallelValue, 5>({0, 0, 0, 0, 0}));
+	std::fill(faultInjectLow_.begin(), faultInjectLow_.end(), std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
+	std::fill(faultInjectHigh_.begin(), faultInjectHigh_.end(), std::array<ParallelValue, 10>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
 	activated_ = PARA_L;
 }
 

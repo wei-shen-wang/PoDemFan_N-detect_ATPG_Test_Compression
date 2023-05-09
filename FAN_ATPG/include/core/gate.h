@@ -31,12 +31,16 @@ namespace CoreNs
 			AND2,
 			AND3,
 			AND4,
+			AND5,
+			AND8,
+			AND9,
 			NAND2,
 			NAND3,
 			NAND4,
 			OR2,
 			OR3,
 			OR4,
+			OR5,
 			NOR2,
 			NOR3,
 			NOR4,
@@ -249,6 +253,7 @@ namespace CoreNs
 			case OR2:
 			case OR3:
 			case OR4:
+			case OR5:
 			case NAND2:
 			case NAND3:
 			case NAND4:
