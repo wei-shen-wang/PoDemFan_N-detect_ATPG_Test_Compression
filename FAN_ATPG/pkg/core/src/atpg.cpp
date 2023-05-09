@@ -64,6 +64,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 	const int halfListSize = faultPtrListSize / 2.0;
 	// isMFO is always false if DTC is not turned on
 	isMFO = (pPatternProcessor->dynamicCompression_ == PatternProcessor::ON) ? isMFO : false;
+	isMFO = false;
 	const int faultListReorderTimes = isMFO ? (log2(faultPtrListSize) + 1) : 1;
 	int numOfAtpgUntestableFaults = 0;
 	int minNumOfFaultsLeft = INFINITE;
@@ -141,7 +142,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 		}
 
 		if (numOfAtpgUntestableFaults < minNumOfFaultsLeft)
-		{// better fault coverage
+		{ // better fault coverage
 			bestTestPatternSet = pPatternProcessor->patternVector_;
 			minNumOfFaultsLeft = numOfAtpgUntestableFaults;
 		}
