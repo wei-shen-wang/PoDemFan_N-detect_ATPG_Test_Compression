@@ -1562,3 +1562,72 @@ bool WriteStilCmd::exec(const std::vector<std::string> &argv)
 
 	return true;
 }
+
+// For VLSI final, not used
+TdfAtpgCmd::TdfAtpgCmd(const std::string &name, FanMgr *fanMgr) : Cmd(name)
+{
+	fanMgr_ = fanMgr;
+	optMgr_.setName(name);
+	optMgr_.setShortDes("Run TDF ATPG");
+	optMgr_.setDes("Run TDF ATPG");
+	Arg *arg = new Arg(Arg::REQ, "input verilog file", "FILE");
+	optMgr_.regArg(arg);
+	// Opt *opt = new Opt(Opt::BOOL, "print usage", "");
+	// opt->addFlag("h");
+	// opt->addFlag("help");
+	// optMgr_.regOpt(opt);
+	Opt *opt = new Opt(Opt::BOOL, "TDF ATPG", "");
+	opt->addFlag("t");
+	opt->addFlag("tdfatpg");
+	optMgr_.regOpt(opt);
+	opt = new Opt(Opt::STR_REQ, "num of detections", "NUM");
+	opt->addFlag("n");
+	opt->addFlag("ndet");
+	optMgr_.regOpt(opt);
+	opt = new Opt(Opt::BOOL, "Compression", "");
+	opt->addFlag("c");
+	opt->addFlag("compression");
+	optMgr_.regOpt(opt);
+}
+
+TdfAtpgCmd::~TdfAtpgCmd() {}
+
+bool TdfAtpgCmd::exec(const std::vector<std::string> &argv)
+{
+	optMgr_.parse(argv);
+
+	// if (optMgr_.isFlagSet("h"))
+	// {
+	// 	optMgr_.usage();
+	// 	return true;
+	// }
+
+	if (optMgr_.isFlagSet("tdfatpg"))
+	{
+		std::cout << "Doing TDF ATPG" << "\n";
+	}
+	else
+	{
+		std::cout << "Doing SAF ATPG" << "\n";
+	}
+
+	int ndet = 1;
+	if (optMgr_.isFlagSet("ndet"))
+	{
+		ndet = atoi(optMgr_.getFlagVar("ndet").c_str());
+		std::cout << "Set n-detection " << ndet << "\n";
+	}
+
+	if (optMgr_.isFlagSet("compression"))
+	{
+		std::cout << "Compression on" << "\n";
+	}
+	else
+	{
+		std::cout << "Compression off" << "\n";
+	}
+
+	std::cout << "Input circuit file is " << optMgr_.getParsedArg(0).c_str() << "\n";
+
+	return true;
+}
