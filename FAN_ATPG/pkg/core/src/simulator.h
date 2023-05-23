@@ -22,6 +22,7 @@ namespace CoreNs
 	{
 	public:
 		inline Simulator(Circuit *pCircuit);
+		// inline Simulator(const Simulator &otherSimulator);
 
 		// Used by both parallel pattern and parallel fault.
 		inline void setNumDetection(const int &numDetection); // This for n-detect.
@@ -42,9 +43,9 @@ namespace CoreNs
 		void parallelPatternFaultSimWithAllPattern(PatternProcessor *pPatternCollector, FaultListExtract *pFaultListExtract);
 		void parallelPatternFaultSim(FaultPtrList &remainingFaults);
 
+		Circuit *pCircuit_;										// The circuit use in simulator.
 	private:
 		// Used by both parallel fault and parallel pattern simulation.
-		Circuit *pCircuit_;										// The circuit use in simulator.
 		int numDetection_;										// For n-detect.
 		int numRecover_;											// Number of recovers needed.
 		std::vector<std::stack<int>> events_; // The event stacks for every circuit levels.
@@ -65,7 +66,7 @@ namespace CoreNs
 
 		// Functions for parallel fault simulator.
 		void parallelFaultReset();
-		bool parallelFaultCheckActivation(const Fault *const pfault);
+		bool parallelFaultCheckActivationOf_SAF_or_TDF_v2(const Fault *const pfault);
 		void parallelFaultFaultInjection(const Fault *const pfault, const size_t &injectFaultIndex);
 		void parallelFaultCheckDetectionDropFaults(FaultPtrList &remainingFaults);
 
@@ -90,6 +91,24 @@ namespace CoreNs
 				activated_(PARA_L)
 	{
 	}
+
+	// inline Simulator::Simulator(const Simulator &otherSimulator)
+	// {
+	// 	// this->pCircuit_ = new Circuit(*(otherSimulator.pCircuit_));
+	// 	this->numDetection_ = otherSimulator.numDetection_;
+	// 	this->numRecover_ = otherSimulator.numRecover_;
+	// 	this->events_ = otherSimulator.events_;
+	// 	this->processed_ = otherSimulator.processed_;
+	// 	this->recoverGates_ = otherSimulator.recoverGates_;
+	// 	this->faultInjectLow_ = otherSimulator.faultInjectLow_;
+	// 	this->faultInjectHigh_ = otherSimulator.faultInjectHigh_;
+	// 	for (int i = 0; i < WORD_SIZE;++i)
+	// 	{
+	// 		this->injectedFaults_[i] = otherSimulator.injectedFaults_[i];
+	// 	}
+	// 	this->numInjectedFaults_ = otherSimulator.numInjectedFaults_;
+	// 	this->activated_ = otherSimulator.activated_;
+	// }
 
 	// **************************************************************************
 	// Function   [ Simulator::setNumDetection ]

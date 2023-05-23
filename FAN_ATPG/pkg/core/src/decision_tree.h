@@ -16,6 +16,7 @@ namespace CoreNs
 	{
 	public:
 		DecisionTreeNode(const int &gateId, const int &startPoint);
+		// DecisionTreeNode(const DecisionTreeNode& otherDecisionTreeNode);
 		int gateId_;																 // the gate ID of the decision
 		int startPointInBacktrackImplicatedGateIDs_; // starting point in backtrackList of gid_ ;
 		bool mark_;																	 // initially mark_=false, when backtracked once, mark_ is changed to true, when backtracked again, this decision is popped out.
@@ -27,6 +28,7 @@ namespace CoreNs
 		static constexpr int InitSize = 5000;
 
 		DecisionTree();
+		// DecisionTree(const DecisionTree& otherDecisionTree);
 
 		void clear();
 		void put(const int &gateId, const int &startPoint);
@@ -45,10 +47,20 @@ namespace CoreNs
 		mark_ = false;
 	}
 
+	// inline DecisionTreeNode::DecisionTreeNode(const DecisionTreeNode& otherDecisionTreeNode){
+	// 	this->gateId_ = otherDecisionTreeNode.gateId_;
+	// 	this->startPointInBacktrackImplicatedGateIDs_ = otherDecisionTreeNode.startPointInBacktrackImplicatedGateIDs_;
+	// 	this->mark_ = otherDecisionTreeNode.mark_;
+	// }
+
 	inline DecisionTree::DecisionTree()
 	{
 		tree_.reserve(InitSize);
 	}
+
+	// inline DecisionTree::DecisionTree(const DecisionTree &otherDecisionTree){
+	// 	this->tree_ = otherDecisionTree.tree_;
+	// }
 
 	// **************************************************************************
 	// Function   [ DecisionTree::clear ]

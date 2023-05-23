@@ -65,7 +65,7 @@ namespace CoreNs
 
 		// Functions for parallel fault simulator.
 		void parallelFaultReset();
-		bool parallelFaultCheckActivation(const Fault *const pfault);
+		bool parallelFaultCheckActivationOf_SAF_or_TDF_v2(const Fault *const pfault);
 		void parallelFaultFaultInjection(const Fault *const pfault, const size_t &injectFaultIndex);
 		void parallelFaultCheckDetectionDropFaults(FaultPtrList &remainingFaults);
 

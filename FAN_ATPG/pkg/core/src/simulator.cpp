@@ -148,7 +148,7 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 	while (it != remainingFaults.end())
 	{
 		// If fault is activated, inject fault.
-		if (parallelFaultCheckActivation(*it))
+		if (parallelFaultCheckActivationOf_SAF_or_TDF_v2(*it))
 		{
 			parallelFaultFaultInjection(*it, numInjectedFaults_);
 			injectedFaults_[numInjectedFaults_++] = it;
@@ -292,7 +292,7 @@ void Simulator::parallelFaultReset()
 }
 
 // **************************************************************************
-// Function   [ Simulator::parallelFaultCheckActivation ]
+// Function   [ Simulator::parallelFaultCheckActivationOf_SAF_or_TDF_v2 ]
 // Commenter  [ CJY, CBH, PYH ]
 // Synopsis   [ usage: Check whether the fault can be activated to the fanout of the gate.
 //              description:
@@ -305,7 +305,7 @@ void Simulator::parallelFaultReset()
 //            ]
 // Date       [ Ver. 1.0 started 2013/08/18 last modified 2023/01/06 ]
 // **************************************************************************
-bool Simulator::parallelFaultCheckActivation(const Fault *const pfault)
+bool Simulator::parallelFaultCheckActivationOf_SAF_or_TDF_v2(const Fault *const pfault)
 {
 	// If output fault, faultyGate = gateID of the faulty gate.
 	// Else if input fault, faultyGate = gateID of the faulty gate's fanin array.
@@ -316,25 +316,28 @@ bool Simulator::parallelFaultCheckActivation(const Fault *const pfault)
 	switch (pfault->faultType_)
 	{
 		case Fault::SA0:
+		case Fault::STR:
 			return faultyGateGoodSimHigh != PARA_L;
 		case Fault::SA1:
-			return faultyGateGoodSimLow != PARA_L;
-		case Fault::STR:
-			if (pCircuit_->numFrame_ < 2)
-			{
-				return false;
-			}
-			return (faultyGateGoodSimLow & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimHigh_) != PARA_L;
 		case Fault::STF:
-			if (pCircuit_->numFrame_ < 2)
-			{
-				return false;
-			}
-			return (faultyGateGoodSimHigh & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimLow_) != PARA_L;
+			return faultyGateGoodSimLow != PARA_L;
 		default:
 			break;
 	}
 	return false;
+	// deprecated
+	// case Fault::STR:
+	// 	if (pCircuit_->numFrame_ < 2)
+	// 	{
+	// 		return false;
+	// 	}
+	// 	return (faultyGateGoodSimLow & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimHigh_) != PARA_L;
+	// case Fault::STF:
+	// 	if (pCircuit_->numFrame_ < 2)
+	// 	{
+	// 		return false;
+	// 	}
+	// 	return (faultyGateGoodSimHigh & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimLow_) != PARA_L;
 }
 
 // **************************************************************************
@@ -363,11 +366,13 @@ void Simulator::parallelFaultFaultInjection(const Fault *const pfault, const siz
 			setBitValue(faultInjectHigh_[faultyGate][pfault->faultyLine_], injectFaultIndex, H);
 			break;
 		case Fault::STR:
-			faultyGate += pCircuit_->numGate_;
+			// deprecated
+			// faultyGate += pCircuit_->numGate_;
 			setBitValue(faultInjectLow_[faultyGate][pfault->faultyLine_], injectFaultIndex, H);
 			break;
 		case Fault::STF:
-			faultyGate += pCircuit_->numGate_;
+			// deprecated
+			// faultyGate += pCircuit_->numGate_;
 			setBitValue(faultInjectHigh_[faultyGate][pfault->faultyLine_], injectFaultIndex, H);
 			break;
 		default:
@@ -470,27 +475,29 @@ bool Simulator::parallelPatternCheckActivation(const Fault *const pfault)
 	switch (pfault->faultType_)
 	{
 		case Fault::SA0:
+		case Fault::STR:
 			activated_ = faultyGateGoodSimHigh;
 			return activated_ != PARA_L;
 		case Fault::SA1:
-			activated_ = faultyGateGoodSimLow;
-			return activated_ != PARA_L;
-		case Fault::STR:
-			if (pCircuit_->numFrame_ < 2)
-			{
-				return false;
-			}
-			activated_ = (faultyGateGoodSimLow & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimHigh_);
-			return activated_ != PARA_L;
 		case Fault::STF:
-			if (pCircuit_->numFrame_ < 2)
-			{
-				return false;
-			}
-			activated_ = (faultyGateGoodSimHigh & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimLow_);
+			activated_ = faultyGateGoodSimLow;
 			return activated_ != PARA_L;
 		default:
 			break;
+		// case Fault::STR:
+		// 	if (pCircuit_->numFrame_ < 2)
+		// 	{
+		// 		return false;
+		// 	}
+		// 	activated_ = (faultyGateGoodSimLow & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimHigh_);
+		// 	return activated_ != PARA_L;
+		// case Fault::STF:
+		// 	if (pCircuit_->numFrame_ < 2)
+		// 	{
+		// 		return false;
+		// 	}
+		// 	activated_ = (faultyGateGoodSimHigh & pCircuit_->circuitGates_[faultyGate + pCircuit_->numGate_].goodSimLow_);
+		// 	return activated_ != PARA_L;
 	}
 	return false;
 }
@@ -519,11 +526,11 @@ void Simulator::parallelPatternFaultInjection(const Fault *const pfault)
 			faultInjectHigh_[faultyGate][pfault->faultyLine_] = PARA_H;
 			break;
 		case Fault::STR:
-			faultyGate += pCircuit_->numGate_;
+			// faultyGate += pCircuit_->numGate_;
 			faultInjectLow_[faultyGate][pfault->faultyLine_] = PARA_H;
 			break;
 		case Fault::STF:
-			faultyGate += pCircuit_->numGate_;
+			// faultyGate += pCircuit_->numGate_;
 			faultInjectHigh_[faultyGate][pfault->faultyLine_] = PARA_H;
 			break;
 		default:

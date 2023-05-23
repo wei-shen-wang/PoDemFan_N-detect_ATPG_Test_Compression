@@ -55,6 +55,7 @@ namespace CoreNs
 			TIEZ
 		};
 		inline Gate();
+		// inline Gate(const Gate& otherGate);
 		inline Gate(int gateId, int cellId, int primitiveId, int numLevel, GateType gateType, int numFO);
 
 		// basic info
@@ -122,6 +123,33 @@ namespace CoreNs
 		minLevelOfFanins_ = -1;
 		prevAtpgValStored_ = X; // Added by Shi-Tang Liu
 	}
+
+	// inline Gate::Gate(const Gate& otherGate){
+	// 	this->gateId_ = otherGate.gateId_;
+	// 	this->cellId_ = otherGate.cellId_;
+	// 	this->primitiveId_ = otherGate.primitiveId_;
+	// 	this->numLevel_ = otherGate.numLevel_;
+	// 	this->frame_ = otherGate.frame_;
+	// 	this->gateType_ = otherGate.gateType_;
+	// 	this->numFI_ = otherGate.numFI_;
+	// 	this->numFO_ = otherGate.numFO_;
+	// 	this->faninVector_ = otherGate.faninVector_;
+	// 	this->fanoutVector_ = otherGate.fanoutVector_;
+	// 	this->atpgVal_ = otherGate.atpgVal_;
+	// 	this->goodSimLow_ = otherGate.goodSimLow_;
+	// 	this->goodSimHigh_ = otherGate.goodSimHigh_;
+	// 	this->faultSimLow_ = otherGate.faultSimLow_;
+	// 	this->faultSimHigh_ = otherGate.faultSimHigh_;
+	// 	this->hasConstraint_ = otherGate.hasConstraint_;
+	// 	this->constraint_ = otherGate.constraint_;
+	// 	this->cc0_ = otherGate.cc0_;
+	// 	this->cc1_ = otherGate.cc1_;
+	// 	this->co_ = otherGate.co_;
+
+	// 	this->depthFromPo_ = otherGate.depthFromPo_;
+	// 	this->minLevelOfFanins_ = otherGate.minLevelOfFanins_;
+	// 	this->prevAtpgValStored_ = otherGate.prevAtpgValStored_;
+	// }
 
 	inline Gate::Gate(int gateId, int cellId, int primitiveId, int numLevel, GateType gateType, int numFO)
 			: gateId_(gateId),

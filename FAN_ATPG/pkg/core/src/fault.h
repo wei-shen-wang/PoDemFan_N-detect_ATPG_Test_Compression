@@ -59,6 +59,7 @@ namespace CoreNs
 		};
 
 		Fault();
+		// Fault(const Fault &fault);
 		Fault(int gateID, FAULT_TYPE faultType, int faultyLine, int equivalent = 1, FAULT_STATE faultState = UD);
 
 		// int aggr_;            // ID of the aggressor gate.
@@ -102,6 +103,15 @@ namespace CoreNs
 		faultState_ = UD;
 		equivalent_ = 1;
 	}
+
+	// inline Fault::Fault(const Fault& otherFault){
+	// 	this->gateID_ = otherFault.gateID_;
+	// 	this->faultType_ = otherFault.faultType_;
+	// 	this->faultyLine_ = otherFault.faultyLine_;
+	// 	this->detection_ = otherFault.detection_;
+	// 	this->faultState_ = otherFault.faultState_;
+	// 	this->equivalent_ = otherFault.equivalent_;
+	// }
 
 	inline Fault::Fault(int gateID, FAULT_TYPE faultType, int faultyLine, int equivalent, FAULT_STATE faultState)
 	{

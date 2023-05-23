@@ -529,11 +529,12 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 {
 	const Fault &fTDF = *faultPtrListForGen.front();
 
-	SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetFault(Fault(fTDF.gateID_ + pCircuit_->numGate_, fTDF.faultType_, fTDF.faultyLine_, fTDF.equivalent_, fTDF.faultState_), false);
+	// initialize anyway because we need to pass by reference
+	Pattern pattern(pCircuit_);
+	pattern.initForTransitionDelayFault(pCircuit_);
+	SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetTDF(fTDF, pattern, false);
 	if (result == PATTERN_FOUND)
 	{
-		Pattern pattern(pCircuit_);
-		pattern.initForTransitionDelayFault(pCircuit_);
 		pPatternProcessor->patternVector_.push_back(pattern);
 		writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
 
@@ -542,6 +543,7 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
 
+		// TODO potential change
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 		pSimulator_->goodSim();
 		writeGoodSimValToPatternPO(pPatternProcessor->patternVector_.back());
@@ -1213,6 +1215,297 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetFault(
 	return genStatus;
 }
 
+// generate v2 first
+Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fault targetFault, Pattern &pattern, bool isAtStageDTC)
+{
+	int backwardImplicationLevel = 0;														// backward imply level
+	int numOfBacktrack = 0;																			// backtrack times
+	bool Finish = false;																				// Finish is true when whole pattern generation process is done
+	bool faultHasPropagatedToPO = false;												// faultHasPropagatedToPO is true when the fault is propagate to the PO
+	Gate *pFaultyLine = NULL;																		// the gate pointer, whose fanOut is the target fault
+	Gate *pLastDFrontier = NULL;																// the D-frontier gate which has the highest level of the D-frontier
+	IMPLICATION_STATUS implicationStatus;												// decide implication to go forward or backward
+	BACKTRACE_STATUS backtraceFlag;															// backtrace flag including { INITIAL, CHECK_AND_SELECT, CURRENT_OBJ_DETERMINE, FAN_OBJ_DETERMINE }
+	SINGLE_PATTERN_GENERATION_STATUS genStatus = PATTERN_FOUND; // the atpgStatus that will be return, including { PATTERN_FOUND, FAULT_UNTESTABLE, ABORT }
+
+	// Get the gate whose output is fault line and set the backwardImplicationLevel
+	// SET A FAULT SIGNAL
+	pFaultyLine = initializeForSinglePatternGeneration(targetFault, backwardImplicationLevel, implicationStatus, isAtStageDTC);
+	// If there's no such gate, return FAULT_UNTESTABLE
+	if (!pFaultyLine)
+	{
+		return FAULT_UNTESTABLE;
+	}
+	// SET BACKTRACE FLAG
+	backtraceFlag = INITIAL;
+
+	while (!Finish)
+	{
+		if (!doImplication(implicationStatus, backwardImplicationLevel))
+		{
+			// implication INCONSISTENCY
+			// record the number of backtrack
+			if (backtrackDecisionTree_.lastNodeMarked())
+			{
+				++numOfBacktrack;
+			}
+			// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
+			if (numOfBacktrack > BACKTRACK_LIMIT)
+			{
+				genStatus = ABORT;
+				Finish = true;
+			}
+
+			clearAllEvents();
+
+			// IS THERE AN UNTRIED COMBINATION OF VALUES ON ASSIGNED HEAD LINES OR FANOUT POINTS?
+			// If yes, SET UNTRIED COMBINATION OF VALUES in the function backtrack
+			if (backtrack(backwardImplicationLevel))
+			{
+				// backtrack success and initialize the data
+				// SET BACKTRACE FLAG
+				backtraceFlag = INITIAL;
+				implicationStatus = (backwardImplicationLevel > 0) ? BACKWARD : FORWARD;
+				pLastDFrontier = NULL;
+			}
+			else
+			{
+				// backtrack fail
+				// EXIT: FAULT_UNTESTABLE FAULT
+				genStatus = FAULT_UNTESTABLE;
+				Finish = true;
+			}
+			continue;
+		}
+
+		// IS CONTINUATION OF BACKTRACE MEANINGFUL?
+		if (!continuationMeaningful(pLastDFrontier))
+		{
+			backtraceFlag = INITIAL;
+		}
+
+		// FAULT SIGNAL PROPAGATED TO A PRIMARY OUTPUT?
+		if (checkIfFaultHasPropagatedToPO(faultHasPropagatedToPO))
+		{
+			// IS THERE ANY UNJUSTIFIED BOUND LINE?
+			if (checkForUnjustifiedBoundLines())
+			{
+				// DETERMINE A FINAL OBJECTIVE TO ASSIGN A VALUE
+				findFinalObjective(backtraceFlag, faultHasPropagatedToPO, pLastDFrontier);
+				// ASSIGN A VALUE TO THE FINAL OBJECTIVE LINE
+				assignAtpgValToFinalObjectiveGates();
+				implicationStatus = FORWARD;
+				continue;
+			}
+			else
+			{
+				// Finding values on the primary inputs which justify all the values on the head lines
+				// LINE JUSTIFICATION OF FREE LINES
+				justifyFreeLines(targetFault);
+
+				// /* assign v2 to pattern 2*/
+				// for (int i = 0; i < pCircuit_->numPI_; ++i)
+				// {
+				// 	pattern.PI2_[i] = pCircuit_->circuitGates_[i].atpgVal_;
+				// }
+				// try to generate first pattern
+				genStatus = generateTDFV1(targetFault, pattern);
+				if (genStatus == TDF_V1_FAIL)
+				{
+					// backtrack
+					// no frontier can propagate to the PO
+					// record the number of backtrack
+					if (backtrackDecisionTree_.lastNodeMarked())
+					{
+						++numOfBacktrack;
+					}
+					// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
+					if (numOfBacktrack > BACKTRACK_LIMIT)
+					{
+						genStatus = ABORT;
+						Finish = true;
+					}
+
+					clearAllEvents();
+
+					// IS THERE AN UNTRIED COMBINATION OF VALUES ON ASSIGNED HEAD LINES OR FANOUT POINTS?
+					// If yes, SET UNTRIED COMBINATION OF VALUES in the function backtrack
+					if (backtrack(backwardImplicationLevel))
+					{
+						// backtrack success and initializeForSinglePatternGeneration the data
+						// SET BACKTRACE FLAG
+						backtraceFlag = INITIAL;
+						implicationStatus = (backwardImplicationLevel > 0) ? BACKWARD : FORWARD;
+						pLastDFrontier = NULL;
+					}
+					else
+					{
+						// backtrack fail
+						// EXIT: FAULT_UNTESTABLE FAULT
+						genStatus = FAULT_UNTESTABLE;
+						Finish = true;
+					}
+					continue;
+				}
+				else if (genStatus = TDF_V1_FOUND)
+				{
+					genStatus = PATTERN_FOUND;
+					Finish = true;
+				}
+				// Finish = true;
+			}
+		}
+		else
+		{
+			// not propagate to PO
+			// THE NUMBER OF GATES IN D-FRONTIER?
+			int numGatesInDFrontier = countEffectiveDFrontiers(pFaultyLine);
+
+			// ZERO
+			if (numGatesInDFrontier == 0)
+			{
+				// no frontier can propagate to the PO
+				// record the number of backtrack
+				if (backtrackDecisionTree_.lastNodeMarked())
+				{
+					++numOfBacktrack;
+				}
+				// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
+				if (numOfBacktrack > BACKTRACK_LIMIT)
+				{
+					genStatus = ABORT;
+					Finish = true;
+				}
+
+				clearAllEvents();
+
+				// IS THERE AN UNTRIED COMBINATION OF VALUES ON ASSIGNED HEAD LINES OR FANOUT POINTS?
+				// If yes, SET UNTRIED COMBINATION OF VALUES in the function backtrack
+				if (backtrack(backwardImplicationLevel))
+				{
+					// backtrack success and initializeForSinglePatternGeneration the data
+					// SET BACKTRACE FLAG
+					backtraceFlag = INITIAL;
+					implicationStatus = (backwardImplicationLevel > 0) ? BACKWARD : FORWARD;
+					pLastDFrontier = NULL;
+				}
+				else
+				{
+					// backtrack fail
+					// EXIT: FAULT_UNTESTABLE FAULT
+					genStatus = FAULT_UNTESTABLE;
+					Finish = true;
+				}
+			}
+			else if (numGatesInDFrontier == 1)
+			{
+				// There exist just one path to the PO
+				// UNIQUE SENSITIZATION
+				backwardImplicationLevel = doUniquePathSensitization(pCircuit_->circuitGates_[dFrontiers_[0]]);
+				// Unique Sensitization fail
+				if (backwardImplicationLevel == UNIQUE_PATH_SENSITIZE_FAIL)
+				{
+					// If UNIQUE_PATH_SENSITIZE_FAIL, the number of gates in d-frontier in the next while loop
+					// and will backtrack
+					continue;
+				}
+				// Unique Sensitization success
+				if (backwardImplicationLevel > 0)
+				{
+					implicationStatus = BACKWARD;
+					continue;
+				}
+				else if (backwardImplicationLevel == 0)
+				{
+					continue;
+				}
+				else
+				{
+					// backwardImplicationLevel < 0, find an objective and set backtraceFlag and pLastDFrontier
+					findFinalObjective(backtraceFlag, faultHasPropagatedToPO, pLastDFrontier);
+					assignAtpgValToFinalObjectiveGates();
+					implicationStatus = FORWARD;
+					continue;
+				}
+			}
+			else
+			{ // more than one
+				// DETERMINE A FINAL OBJECTIVE TO ASSIGN A VALUE
+				findFinalObjective(backtraceFlag, faultHasPropagatedToPO, pLastDFrontier);
+				// ASSIGN A VALUE TO THE FINAL OBJECTIVE LINE
+				assignAtpgValToFinalObjectiveGates();
+				implicationStatus = FORWARD;
+				continue;
+			}
+		}
+	}
+	return genStatus;
+}
+
+// return v1_found if v1 found, return v1 failed and backtrack v2 if v1 is not found
+Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pattern &pattern)
+{
+	int backwardImplicationLevel = 0;			// backward imply level
+	int numOfBacktrack = 0;								// backtrack times
+	bool Finish = false;									// Finish is true when V1 generation process is done
+	Gate *pFaultyLine = NULL;							// the gate pointer, whose fanOut is the target fault
+	IMPLICATION_STATUS implicationStatus; // decide implication to go forward or backward
+	BACKTRACE_STATUS backtraceFlag;				// backtrace flag including { INITIAL, CHECK_AND_SELECT, CURRENT_OBJ_DETERMINE, FAN_OBJ_DETERMINE }
+	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FAIL;
+
+	// the pCircuit still holds the atpgVal_ of the original Atpg
+	Simulator reinitializedSimulator = Simulator(pCircuit_);
+	Atpg atpgForV1 = Atpg(pCircuit_, &reinitializedSimulator);
+
+	for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+	{
+		atpgForV1.pCircuit_->circuitGates_[i].goodSimLow_ = PARA_L;
+		atpgForV1.pCircuit_->circuitGates_[i].goodSimHigh_ = PARA_L;
+		atpgForV1.pCircuit_->circuitGates_[i].faultSimLow_ = PARA_L;
+		atpgForV1.pCircuit_->circuitGates_[i].faultSimHigh_ = PARA_L;
+		atpgForV1.pCircuit_->circuitGates_[i].prevAtpgValStored_ = X;
+		if (i < atpgForV1.pCircuit_->numPI_ - 1)
+		{
+			switch (atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_)
+			{
+				case L:
+				case H:
+				case X:
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_;
+					break;
+				case D:
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
+				case B:
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = L;
+				default:
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_;
+					break;
+			}
+		}
+		else
+		{
+			atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = X;
+		}
+	}
+	// initialize for V1 generation
+	// setGateAtpgValAndRunImplication(Gate & gate, const Value &val)
+	// if value conflict return TDF_V1_FAIL
+
+	while (!Finish)
+	{
+		// if fault activated
+		// NO:
+		// 	backtrack
+		// 	backtrack fail:
+		// 		return TDF_V1_FAIL
+		// YES:
+		// 	check for unjustified bound lines
+		// 	justify all the free lines
+		// 	return TDF_V1_FOUND
+		//
+	}
+}
+
 // **************************************************************************
 // Function   [ Atpg::initializeForSinglePatternGeneration ]
 // Commenter  [ WWS ]
@@ -1319,20 +1612,20 @@ Gate *Atpg::initializeForSinglePatternGeneration(Fault &targetFault, int &backwa
 		implicationStatus = BACKWARD;
 	}
 
-	if (targetFault.faultType_ == Fault::STR || targetFault.faultType_ == Fault::STF)
-	{
-		Level = setUpFirstTimeFrame(targetFault);
-		if (Level < 0)
-		{
-			return NULL;
-		}
+	// if (targetFault.faultType_ == Fault::STR || targetFault.faultType_ == Fault::STF)
+	// {
+	// 	// Level = setUpFirstTimeFrame(targetFault);
+	// 	if (Level < 0)
+	// 	{
+	// 		return NULL;
+	// 	}
 
-		if (Level > backwardImplicationLevel)
-		{
-			backwardImplicationLevel = Level;
-			implicationStatus = BACKWARD;
-		}
-	}
+	// 	if (Level > backwardImplicationLevel)
+	// 	{
+	// 		backwardImplicationLevel = Level;
+	// 		implicationStatus = BACKWARD;
+	// 	}
+	// }
 	return &pCircuit_->circuitGates_[fGate_id];
 }
 
@@ -3098,8 +3391,39 @@ Fault Atpg::setFreeLineFaultyGate(Gate &gate)
 	}
 	gateID_to_valModified_[gateID] = 1;
 	pushGateFanoutsToEventStack(gateID);
+
 	// decide the new fault type according to pCurrentGate value
-	return Fault(gateID, (pCurrentGate->atpgVal_ == D) ? Fault::SA0 : Fault::SA1, 0);
+	// and the fault type
+	Fault faultToReturn;
+	if (pCurrentGate->atpgVal_ == D)
+	{
+		if (currentTargetFault_.faultType_ == Fault::SA0 || currentTargetFault_.faultType_ == Fault::SA1)
+		{
+			faultToReturn = Fault(gateID, Fault::SA0, 0);
+		}
+		else if (currentTargetFault_.faultType_ == Fault::STR || currentTargetFault_.faultType_ == Fault::STF)
+		{
+			faultToReturn = Fault(gateID, Fault::STR, 0);
+		}
+	}
+	else if (pCurrentGate->atpgVal_ == B)
+	{
+		if (currentTargetFault_.faultType_ == Fault::SA0 || currentTargetFault_.faultType_ == Fault::SA1)
+		{
+			faultToReturn = Fault(gateID, Fault::SA1, 0);
+		}
+		else if (currentTargetFault_.faultType_ == Fault::STR || currentTargetFault_.faultType_ == Fault::STF)
+		{
+			faultToReturn = Fault(gateID, Fault::STF, 0);
+		}
+	}
+	else
+	{
+		std::cerr << "Atpg::setFreeLineFaultyGate:\n";
+		std::cerr << "pCurrentGate->atpgVal should not be" << pCurrentGate->atpgVal_;
+		exit(0);
+	}
+	return faultToReturn;
 }
 
 // **************************************************************************

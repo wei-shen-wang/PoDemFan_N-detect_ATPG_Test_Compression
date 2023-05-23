@@ -26,25 +26,27 @@ namespace CoreNs
 
 		inline Circuit();
 
+		// inline Circuit(const Circuit &otherCircuit);
+
 		// Build the circuit from the netlist.
 		bool buildCircuit(IntfNs::Netlist *const pNetlist, const int &numFrame = 1,
-		                  const TIME_FRAME_CONNECT_TYPE &timeFrameConnectType = CAPTURE);
+											const TIME_FRAME_CONNECT_TYPE &timeFrameConnectType = CAPTURE);
 
 		// Info for one time frame.
 		IntfNs::Netlist *pNetlist_; // Corresponding netlist.
-		int numPI_;                 // Number of PIs.
-		int numPPI_;                // Number of PPIs (PPOs).
-		int numPO_;                 // Number of POs.
-		int numComb_;               // Number of combinational gates.
-		int numGate_;               // Number of gates.
-		int numNet_;                // Number of nets.
-		int circuitLvl_;            // Circuit level, starting from inputs.
+		int numPI_;									// Number of PIs.
+		int numPPI_;								// Number of PPIs (PPOs).
+		int numPO_;									// Number of POs.
+		int numComb_;								// Number of combinational gates.
+		int numGate_;								// Number of gates.
+		int numNet_;								// Number of nets.
+		int circuitLvl_;						// Circuit level, starting from inputs.
 
 		// Info for multiple time frames.
-		int numFrame_;                                 // Number of time frames.
+		int numFrame_;																 // Number of time frames.
 		TIME_FRAME_CONNECT_TYPE timeFrameConnectType_; // Time frame connection type.
-		int totalGate_;                                // Number of total gates. Equal to numGate_ * numFrame_.
-		int totalLvl_;                                 // Total levels. Equal to circuitLvl_ * numFrame_.
+		int totalGate_;																 // Number of total gates. Equal to numGate_ * numFrame_.
+		int totalLvl_;																 // Total levels. Equal to circuitLvl_ * numFrame_.
 
 		// Structure
 		// **********************************************************************
@@ -54,7 +56,7 @@ namespace CoreNs
 		// |--- ---- ---- --- ----|--- ---- ---- --- ----|     |--- ---- ----
 		// **********************************************************************
 
-		std::vector<Gate> circuitGates_;        // Gates in the circuit.
+		std::vector<Gate> circuitGates_;				// Gates in the circuit.
 		std::vector<int> cellIndexToGateIndex_; // Map cells in the netlist to gates.
 		std::vector<int> portIndexToGateIndex_; // Map ports in the netlist to gates.
 
@@ -68,9 +70,9 @@ namespace CoreNs
 		void createCircuitPPI();
 		void createCircuitComb();
 		void createCircuitPmt(const int &gateID, const IntfNs::Cell *const cell,
-		                      const IntfNs::Pmt *const pmt);
+													const IntfNs::Pmt *const pmt);
 		void determineGateType(const int &gateID, const IntfNs::Cell *const cell,
-		                       const IntfNs::Pmt *const pmt);
+													 const IntfNs::Pmt *const pmt);
 		void createCircuitPO();
 		void createCircuitPPO();
 		void connectMultipleTimeFrame();
@@ -90,6 +92,25 @@ namespace CoreNs
 		numFrame_ = 1;
 		timeFrameConnectType_ = CAPTURE;
 	}
+
+	// inline Circuit::Circuit(const Circuit &otherCircuit)
+	// {
+	// 	pNetlist_ = otherCircuit.pNetlist_;
+	// 	numPI_ = otherCircuit.numPI_;
+	// 	numPPI_ = otherCircuit.numPPI_;
+	// 	numPO_ = otherCircuit.numPO_;
+	// 	numComb_ = otherCircuit.numComb_;
+	// 	numGate_ = otherCircuit.numGate_;
+	// 	numNet_ = otherCircuit.numNet_;
+	// 	circuitLvl_ = otherCircuit.circuitLvl_;
+
+	// 	numFrame_ = otherCircuit.numFrame_;
+	// 	timeFrameConnectType_ = otherCircuit.timeFrameConnectType_;
+	// 	totalGate_ = otherCircuit.totalGate_;
+	// 	totalLvl_ = otherCircuit.totalLvl_;
+
+	// 	circuitGates_ = otherCircuit.circuitGates_;
+	// }
 };
 
 #endif

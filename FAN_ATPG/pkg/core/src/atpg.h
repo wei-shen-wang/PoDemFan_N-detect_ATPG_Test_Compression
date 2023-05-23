@@ -29,12 +29,15 @@ namespace CoreNs
 	{
 	public:
 		inline Atpg(Circuit *pCircuit, Simulator *pSimulator);
+		// inline Atpg(const Atpg &otherAtpg);
 
 		enum SINGLE_PATTERN_GENERATION_STATUS
 		{
 			PATTERN_FOUND = 0,
 			FAULT_UNTESTABLE,
-			ABORT
+			ABORT,
+			TDF_V1_FAIL,
+			TDF_V1_FOUND
 		};
 		enum GATE_LINE_TYPE
 		{
@@ -98,7 +101,11 @@ namespace CoreNs
 		std::vector<int> isInEventStack_;													// 1 if a gate is in an event stack, 0 otherwise
 		Gate *firstTimeFrameHeadLine_;														// this parameter is for multiple time frame
 
+		Atpg *pBackupAtpg_;
+
 		// ---------------private methods----------------- //
+		// void backupCurrentAtpg();
+		// void recoverFromBackupAtpg();
 
 		void setupCircuitParameter();
 		void calculateGateDepthFromPO();
@@ -118,6 +125,8 @@ namespace CoreNs
 		void clearFaultEffectOnGateAtpgVal(Gate &gate);
 
 		SINGLE_PATTERN_GENERATION_STATUS generateSinglePatternOnTargetFault(Fault targetFault, bool isAtStageDTC);
+		SINGLE_PATTERN_GENERATION_STATUS generateSinglePatternOnTargetTDF(Fault targetFault, Pattern &pattern, bool isAtStageDTC);
+		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1(Fault targetFault, Pattern &pattern);
 
 		// initialization at the start of single pattern generation
 		Gate *initializeForSinglePatternGeneration(Fault &targetFault, int &BackImpLevel, IMPLICATION_STATUS &implicationStatus, const bool &isAtStageDTC);
@@ -240,7 +249,55 @@ namespace CoreNs
 		backtrackImplicatedGateIDs_.reserve(pCircuit->totalGate_);
 		firstTimeFrameHeadLine_ = NULL;
 		isInEventStack_.resize(pCircuit->totalGate_);
+		pBackupAtpg_ = NULL;
 	}
+
+	// inline Atpg::Atpg(const Atpg &otherAtpg)
+	// {
+	// 	this->pCircuit_ = new Circuit(*(otherAtpg.pCircuit_));
+	// 	this->pSimulator_ = new Simulator(*(otherAtpg.pSimulator_));
+	// 	this->pSimulator_->pCircuit_ = this->pCircuit_;
+	// 	// delete otherAtpg.pCircuit_;
+	// 	// delete otherAtpg.pSimulator_;
+	// 	this->currentTargetFault_ = otherAtpg.currentTargetFault_;
+	// 	this->currentTargetHeadLineFault_ = otherAtpg.currentTargetHeadLineFault_;
+	// 	this->numOfheadLines_ = otherAtpg.numOfheadLines_;
+	// 	this->headLineGateIDs_ = otherAtpg.headLineGateIDs_;
+	// 	this->gateID_to_n0_ = otherAtpg.gateID_to_n0_;
+	// 	this->gateID_to_n1_ = otherAtpg.gateID_to_n1_;
+	// 	this->gateID_to_valModified_ = otherAtpg.gateID_to_valModified_;
+	// 	this->gateID_to_reachableByTargetFault_ = otherAtpg.gateID_to_reachableByTargetFault_;
+	// 	this->gateID_to_lineType_ = otherAtpg.gateID_to_lineType_;
+	// 	this->gateID_to_xPathStatus_ = otherAtpg.gateID_to_xPathStatus_;
+	// 	this->gateID_to_uniquePath_ = otherAtpg.gateID_to_uniquePath_;
+	// 	this->circuitLevel_to_EventStack_ = otherAtpg.circuitLevel_to_EventStack_;
+	// 	this->backtrackDecisionTree_ = otherAtpg.backtrackDecisionTree_;
+	// 	this->backtrackImplicatedGateIDs_ = otherAtpg.backtrackImplicatedGateIDs_;
+	// 	this->gateIDsToResetAfterBackTrace_ = otherAtpg.gateIDsToResetAfterBackTrace_;
+	// 	this->initialObjectives_ = otherAtpg.initialObjectives_;
+	// 	this->currentObjectives_ = otherAtpg.currentObjectives_;
+	// 	this->fanoutObjectives_ = otherAtpg.fanoutObjectives_;
+	// 	this->headLineObjectives_ = otherAtpg.headLineObjectives_;
+	// 	this->finalObjectives_ = otherAtpg.finalObjectives_;
+	// 	this->unjustifiedGateIDs_ = otherAtpg.unjustifiedGateIDs_;
+	// 	this->dFrontiers_ = otherAtpg.dFrontiers_;
+	// 	this->isInEventStack_ = otherAtpg.isInEventStack_;
+	// 	this->pBackupAtpg_ = otherAtpg.pBackupAtpg_;
+	// }
+
+	// inline void Atpg::backupCurrentAtpg(){
+	// 	this->pBackupAtpg_ = new Atpg(*(this));
+	// }
+
+	// inline void Atpg::recoverFromBackupAtpg(){
+	// 	delete pCircuit_;
+	// 	delete pSimulator_;
+	// 	pCircuit_ = NULL;
+	// 	pSimulator_ = NULL;
+	// 	*this = *pBackupAtpg_;
+	// 	delete pBackupAtpg_;
+	// 	pBackupAtpg_ = NULL;
+	// }
 
 	// **************************************************************************
 	// Function   [ Atpg::evaluateGoodVal ]
