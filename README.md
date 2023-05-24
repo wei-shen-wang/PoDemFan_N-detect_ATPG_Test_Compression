@@ -1,10 +1,17 @@
 # ATPG_TDF_ndetect_compression
 2023 VLSI Testing Final Project
 
+# Usage
+In directory FAN_ATPG
+- type make to make file
+- type make clean to clean the file
+
 Command : ./atpg -tdfatpg -ndet n -compression *.ckt > *.pat
 
-## Statistic for SAF ATPG
-## (Compression on, fault collapsing on, MFO off)
+It will first convert *.ckt file to *.v file (in the same directory) then run the executable ./bin/opt/fan
+
+# Statistic for SAF ATPG
+**(Compression on, fault collapsing on, MFO off)**
 
 c17 : Doesn't in the report , patterns : 8 -> 5
 
@@ -25,3 +32,26 @@ c5315 : No comparison, doesn't in the report
 c6288 : patterns : 42 -> 26
 
 c7552 : patterns : 289 -> 142, FC : 98.40% -> 98.43%
+
+# Statistic for TDF ATPG
+**(Compression ?, no fault collapsing , MFO ?)**
+
+c17 : Doesn't in the report
+
+c432 :
+
+c499 :
+
+c880 :
+
+c1355 :
+
+c2670 :
+
+c3540 :
+
+c5315 : Doesn't in the report
+
+c6288 :
+
+c7552 : 
