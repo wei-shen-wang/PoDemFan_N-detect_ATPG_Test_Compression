@@ -14,7 +14,7 @@ model seq3
   input (nextstate) ( )
   input (CK) ( )  // ActiveLO Level Sensitive Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _inv mlc_C_gate (CK, mlc_clock_net);
     primitive = _dlat mlc_latch (  ,  , mlc_clock_net, nextstate, IQ, );
   )
@@ -29,7 +29,7 @@ model seq3_1
   input (nextstate) ( )
   input (CK) ( )  // Posedge Triggered Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _inv mlc_set_gate (SN, mlc_set_net);
     primitive = _inv mlc_reset_gate (RN, mlc_reset_net);
     primitive = _and mlc_set_and_gate (RN, mlc_set_net, mlc_set_and_net);
@@ -45,7 +45,7 @@ model seq3_2
   input (nextstate) ( )
   input (CK) ( )  // Posedge Triggered Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _inv mlc_reset_gate (RN, mlc_reset_net);
     primitive = _dff mlc_dff (  , mlc_reset_net, CK, nextstate, IQ, );
   )
@@ -59,7 +59,7 @@ model seq3_3
   input (nextstate) ( )
   input (CK) ( )  // Posedge Triggered Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _inv mlc_set_gate (SN, mlc_set_net);
     primitive = _dff mlc_dff ( mlc_set_net,  , CK, nextstate, IQ, );
   )
@@ -72,7 +72,7 @@ model seq3_4
   input (nextstate) ( )
   input (G) ( )  // ActiveHI Level Sensitive Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _dlat mlc_latch (  ,  , G, nextstate, IQ, );
   )
 )
@@ -84,7 +84,7 @@ model seq3_5
   input (nextstate) ( )
   input (GN) ( )  // ActiveLO Level Sensitive Clock.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (IQ) ( 
+  output (IQ) (
     primitive = _inv mlc_C_gate (GN, mlc_clock_net);
     primitive = _dlat mlc_latch (  ,  , mlc_clock_net, nextstate, IQ, );
   )
@@ -99,7 +99,7 @@ model udp_dff
   input (clr_) ( )  //  ActiveLO Asynch. Reset.
   input (set_) ( )  //  ActiveLO Asynch. Set.
   input (NOTIFIER) (no_fault = sa0 sa1; used = false;)  // Notifier.
-  output (out) ( 
+  output (out) (
     primitive = _inv mlc_set_gate (set_, mlc_set_net);
     primitive = _inv mlc_reset_gate (clr_, mlc_reset_net);
     primitive = _and mlc_reset_and_gate (set_, mlc_reset_net, mlc_reset_and_net);
@@ -112,7 +112,7 @@ model udp_mux
   (out, in, s_in, s_sel)
 (
   input (in, s_in, s_sel) ( )
-  output (out) ( 
+  output (out) (
     primitive = _mux mlc_gate0 (in, s_in, s_sel, out);
   )
 )
@@ -213,6 +213,52 @@ model AND4_X4
   input (A4) ( )
   output (ZN) (
     primitive = _and  mlc_and_1 ( A1, A2, A3, A4, ZN );
+  )
+)
+
+model AND5_X1
+  (A1, A2, A3, A4, A5, ZN)
+(
+  input (A1) ( )
+  input (A2) ( )
+  input (A3) ( )
+  input (A4) ( )
+  input (A5) ( )
+  output (ZN) (
+    primitive = _and  mlc_and_1 ( A1, A2, A3, A4, A5, ZN );
+  )
+)
+
+model AND8_X1
+  (A1, A2, A3, A4, A5, A6, A7, A8, ZN)
+(
+  input (A1) ( )
+  input (A2) ( )
+  input (A3) ( )
+  input (A4) ( )
+  input (A5) ( )
+  input (A6) ( )
+  input (A7) ( )
+  input (A8) ( )
+  output (ZN) (
+    primitive = _and  mlc_and_1 ( A1, A2, A3, A4, A5, A6, A7, A8, ZN );
+  )
+)
+
+model AND9_X1
+  (A1, A2, A3, A4, A5, A6, A7, A8, A9, ZN)
+(
+  input (A1) ( )
+  input (A2) ( )
+  input (A3) ( )
+  input (A4) ( )
+  input (A5) ( )
+  input (A6) ( )
+  input (A7) ( )
+  input (A8) ( )
+  input (A9) ( )
+  output (ZN) (
+    primitive = _and  mlc_and_1 ( A1, A2, A3, A4, A5, A6, A7, A8, A9, ZN );
   )
 )
 
@@ -466,11 +512,11 @@ model AOI22_X4
 )
 
 model BUF_X1
-  (A, Z)
+  (A1, ZN)
 (
-  input (A) ( )
-  output (Z) (
-    primitive = _buf  mlc_buf_1 ( A, Z );
+  input (A1) ( )
+  output (ZN) (
+    primitive = _buf  mlc_buf_1 ( A1, ZN );
   )
 )
 
@@ -873,11 +919,11 @@ model HA_X1
 )
 
 model INV_X1
-  (A, ZN)
+  (A1, ZN)
 (
-  input (A) ( )
+  input (A1) ( )
   output (ZN) (
-    primitive = _inv  mlc_inv_1 ( A, ZN );
+    primitive = _inv  mlc_inv_1 ( A1, ZN );
   )
 )
 
@@ -1529,6 +1575,19 @@ model OR4_X4
   input (A4) ( )
   output (ZN) (
     primitive = _or  mlc_or_1 ( A1, A2, A3, A4, ZN );
+  )
+)
+
+model OR5_X1
+  (A1, A2, A3, A4, A5, ZN)
+(
+  input (A1) ( )
+  input (A2) ( )
+  input (A3) ( )
+  input (A4) ( )
+  input (A5) ( )
+  output (ZN) (
+    primitive = _or  mlc_or_1 ( A1, A2, A3, A4, A5, ZN );
   )
 )
 

@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	FanMgr fanMgr;
 	CmdMgr cmdMgr;
 	initCmd(cmdMgr, fanMgr);
-	CmdMgr::Result res = CmdMgr::SUCCESS;
+	// CmdMgr::Result res = CmdMgr::SUCCESS;
 
 	// welcome message
 	// printWelcome();
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 		// Do TDF ATPG
 		// Change command if needed
 		std::vector<std::string> scriptStr = {
-				"read_lib techlib/mod_tsmc18.mdt",
+				"read_lib techlib/mod_nangate45.mdt",
 				"read_netlist " + inputFile,
 				"report_netlist",
 				"build_circuit --frame 1",
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 	{
 		// Do SAF ATPG
 		std::vector<std::string> scriptStr = {
-				"read_lib techlib/mod_tsmc18.mdt",
+				"read_lib techlib/mod_nangate45.mdt",
 				"read_netlist " + inputFile,
 				"report_netlist",
 				"build_circuit --frame 1",
