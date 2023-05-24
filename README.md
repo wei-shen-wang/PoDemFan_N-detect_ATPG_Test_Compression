@@ -1,7 +1,7 @@
 # ATPG_TDF_ndetect_compression
 2023 VLSI Testing Final Project
 
-Command : ./atpg -tdfatpg -ndet n -compression *.v > *.pat
+Command : ./atpg -tdfatpg -ndet n -compression *.ckt > *.pat
 
 ## Statistic for SAF ATPG
 ## (Compression on, fault collapsing on, MFO off)

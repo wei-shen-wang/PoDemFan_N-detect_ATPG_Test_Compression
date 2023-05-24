@@ -256,14 +256,14 @@ void generate_verilog(string filename)
 			 << "endmodule" << endl;
 }
 
-int main(int argc, char *argv[])
+int convertCkt2Vlog(std::string inputCktFile, std::string outputVlogFile)
 {
-	if (argc != 3)
-	{
-		cout << "Usage: " << argv[0] << " input.ckt output.v" << endl;
-		return 1;
-	}
-	parse_circuit(argv[1]);
-	generate_verilog(argv[2]);
+	// if (argc != 3)
+	// {
+	// 	cout << "Usage: " << argv[0] << " input.ckt output.v" << endl;
+	// 	return 1;
+	// }
+	parse_circuit(inputCktFile);
+	generate_verilog(outputVlogFile);
 	return 0;
 }
