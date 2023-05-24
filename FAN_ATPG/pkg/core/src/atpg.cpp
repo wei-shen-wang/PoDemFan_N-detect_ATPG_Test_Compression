@@ -1309,7 +1309,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				// 	pattern.PI2_[i] = pCircuit_->circuitGates_[i].atpgVal_;
 				// }
 				// try to generate first pattern
-				genStatus = generateTDFV1(targetFault, pattern);
+				genStatus = generateTDFV1(this->currentTargetFault_, pattern);
 				if (genStatus == TDF_V1_FAIL)
 				{
 					// backtrack
@@ -1445,17 +1445,20 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 // return v1_found if v1 found, return v1 failed and backtrack v2 if v1 is not found
 Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pattern &pattern)
 {
-	int backwardImplicationLevel = 0;			// backward imply level
-	int numOfBacktrack = 0;								// backtrack times
-	bool Finish = false;									// Finish is true when V1 generation process is done
-	Gate *pFaultyLine = NULL;							// the gate pointer, whose fanOut is the target fault
+	int backwardImplicationLevel = 0; // backward imply level
+	int numOfBacktrack = 0;						// backtrack times
+	bool Finish = false;							// Finish is true when V1 generation process is done
+	int faulty_GateID = targetFault.gateID_;
+	// Gate *pFaultyLine = NULL;							// the gate pointer, whose fanOut is the target fault
 	IMPLICATION_STATUS implicationStatus; // decide implication to go forward or backward
 	BACKTRACE_STATUS backtraceFlag;				// backtrace flag including { INITIAL, CHECK_AND_SELECT, CURRENT_OBJ_DETERMINE, FAN_OBJ_DETERMINE }
 	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FAIL;
 
-	// the pCircuit still holds the atpgVal_ of the original Atpg
-	Simulator reinitializedSimulator = Simulator(pCircuit_);
-	Atpg atpgForV1 = Atpg(pCircuit_, &reinitializedSimulator);
+	// the reinitialized circuit still holds the atpgVal_ of the original Atpg
+	Circuit reinitializedCircuit = *pCircuit_;
+	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
+	Atpg atpgForV1 = Atpg(&reinitializedCircuit, &reinitializedSimulator);
+	Gate &atpgForV1_faulty_gate = atpgForV1.pCircuit_->circuitGates_[faulty_GateID];
 
 	for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
 	{
@@ -1487,13 +1490,178 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = X;
 		}
 	}
-	// initialize for V1 generation
-	// setGateAtpgValAndRunImplication(Gate & gate, const Value &val)
-	// if value conflict return TDF_V1_FAIL
+	// initialize for V1 generation, run good simulation with current input
+	for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+	{
+		atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = atpgForV1.evaluateGoodVal(atpgForV1.pCircuit_->circuitGates_[i]);
+		if (atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ == L || atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ == H)
+		{
+			atpgForV1.gateID_to_valModified_[i] = 1;
+		}
+		else if (atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ == X)
+		{
+		}
+		else
+		{
+			std::cerr << "unexpected atpg value in Atpg::generateTDFV1\n";
+			exit(0);
+		}
+	}
+
+	if (atpgForV1_faulty_gate.atpgVal_ == L)
+	{
+		if (targetFault.faultType_ == Fault::STR)
+		{
+			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			{
+				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+			}
+			return TDF_V1_FOUND;
+		}
+		else
+		{
+			return TDF_V1_FAIL;
+		}
+	}
+
+	if (atpgForV1_faulty_gate.atpgVal_ == H)
+	{
+		if (targetFault.faultType_ == Fault::STF)
+		{
+			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			{
+				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+				return TDF_V1_FOUND;
+			}
+		}
+		else
+		{
+			return TDF_V1_FAIL;
+		}
+	}
+	Value faultActivationValue;
+	if (atpgForV1_faulty_gate.atpgVal_ == X)
+	{
+		if (targetFault.faultType_ == Fault::STR)
+		{
+			faultActivationValue = L;
+		}
+		else if (targetFault.faultType_ == Fault::STF)
+		{
+			faultActivationValue = H;
+		}
+	}
+	// Gate *gFaultyLine = &atpgForV1_faulty_gate;
+	// if (targetFault.faultyLine_ != 0)
+	// {
+	// 	gFaultyLine = &atpgForV1.pCircuit_->circuitGates_[gFaultyLine->faninVector_[targetFault.faultyLine_ - 1]];
+	// }
+	atpgForV1.initializeObjectivesAndFrontiers();
+	for (Gate &gate : atpgForV1.pCircuit_->circuitGates_)
+	{
+		if (this->gateID_to_lineType_[gate.gateId_] == FREE_LINE)
+		{
+			atpgForV1.gateID_to_valModified_[gate.gateId_] = 1;
+		}
+		else
+		{
+			atpgForV1.gateID_to_valModified_[gate.gateId_] = 0;
+		}
+		atpgForV1.gateID_to_reachableByTargetFault_[gate.gateId_] = 0;
+
+		atpgForV1.gateID_to_xPathStatus_[gate.gateId_] = UNKNOWN;
+	}
+
+	atpgForV1.pushGateToEventStack(faulty_GateID);
+
+	for (int i = atpgForV1_faulty_gate.numLevel_; i < atpgForV1.pCircuit_->totalLvl_; ++i)
+	{
+		while (!atpgForV1.circuitLevel_to_EventStack_[i].empty())
+		{
+			int gateID = atpgForV1.popEventStack(i);
+			const Gate &rCurrentGate = atpgForV1.pCircuit_->circuitGates_[gateID];
+			atpgForV1.gateID_to_valModified_[gateID] = 0;
+			atpgForV1.gateID_to_reachableByTargetFault_[gateID] = 1;
+
+			for (int fanoutID : rCurrentGate.fanoutVector_)
+			{
+				atpgForV1.pushGateToEventStack(fanoutID);
+			}
+		}
+	}
+
+	// setting activation value righthere rightnow!
+	if (this->gateID_to_lineType_[faulty_GateID] == FREE_LINE)
+	{
+		atpgForV1_faulty_gate.atpgVal_ = faultActivationValue;
+		atpgForV1.backtrackImplicatedGateIDs_.push_back(faulty_GateID);
+		backwardImplicationLevel = 0;
+		implicationStatus = FORWARD;
+	}
+	else
+	{
+		Value valueTemp;
+		backwardImplicationLevel = 0;
+		atpgForV1_faulty_gate.atpgVal_ = faultActivationValue;
+		atpgForV1.backtrackImplicatedGateIDs_.push_back(faulty_GateID);
+		// schedule all of fanout gates of the targetfault gate
+		pushGateFanoutsToEventStack(faulty_GateID);
+
+		// backtrace stops at HEADLINE
+		if (this->gateID_to_lineType_[faulty_GateID] == HEAD_LINE)
+		{
+			// TODO check if not assigning value to faulty gate is correct here
+			atpgForV1.gateID_to_valModified_[faulty_GateID] = 1;
+		}
+		else if (atpgForV1_faulty_gate.gateType_ == Gate::INV || atpgForV1_faulty_gate.gateType_ == Gate::BUF || atpgForV1_faulty_gate.gateType_ == Gate::PO || atpgForV1_faulty_gate.gateType_ == Gate::PPO)
+		{
+			Gate *pFaninGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1_faulty_gate.faninVector_[0]];
+			atpgForV1.gateID_to_valModified_[pFaninGate->gateId_] = 1;
+			Value val = faultActivationValue;
+			valueTemp = atpgForV1_faulty_gate.isInverse();
+			pFaninGate->atpgVal_ = cXOR2(valueTemp, val);
+			atpgForV1.backtrackImplicatedGateIDs_.push_back(pFaninGate->gateId_);
+			pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+			pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+
+			if (backwardImplicationLevel < pFaninGate->numLevel_)
+			{
+				backwardImplicationLevel = pFaninGate->numLevel_;
+			}
+		}
+		else if (faultActivationValue == atpgForV1_faulty_gate.getOutputCtrlValue())
+		{
+			atpgForV1.gateID_to_valModified_[faulty_GateID] = 1;
+			// scan all fanin gate of faulty gate
+			for (int i = 0; i < atpgForV1_faulty_gate.numFI_; ++i)
+			{
+				Gate *pFaninGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1_faulty_gate.faninVector_[i]];
+				atpgForV1.backtrackImplicatedGateIDs_.push_back(pFaninGate->gateId_);
+				pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+				pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+				if (backwardImplicationLevel < pFaninGate->numLevel_)
+				{
+					backwardImplicationLevel = pFaninGate->numLevel_;
+				}
+			}
+		}
+		else
+		{
+			pushGateToEventStack(faulty_GateID);
+			if(backwardImplicationLevel < atpgForV1_faulty_gate.numLevel_)
+			{
+				backwardImplicationLevel = atpgForV1_faulty_gate.numLevel_;
+			}
+		}
+	}
+
+	backtraceFlag = INITIAL;
 
 	while (!Finish)
 	{
-		// if fault activated
+		// if fault activated:
+		// 		if any unjustified bound lines
+		// else
 		// NO:
 		// 	backtrack
 		// 	backtrack fail:
@@ -3127,7 +3295,7 @@ bool Atpg::xPathTracing(Gate *pGate)
 // 			  			 				pFaultyGate, and schedule fanout gates of pFaultyGate.
 //                  (4) Update backwardImplicationLevel to be max level
 //                      of fanin gates of pFaultyGate.
-//                2. Fault is on the ouput line of pFaultyGate, and
+//                2. Fault is on the output line of pFaultyGate, and
 //                   pFaultyLineGate is pFaultyGate.
 //                  (1) Activate the fault, and set value of pFaultyLineGate
 // 			  			  			according to fault type.
