@@ -167,6 +167,8 @@ namespace CoreNs
 		IMPLICATION_STATUS evaluateAndSetGateAtpgVal(Gate *pGate);
 		IMPLICATION_STATUS evaluateAndSetFaultyGateAtpgVal(Gate *pGate);
 
+		IMPLICATION_STATUS evaluateAndSetGateAtpgValForTDFV1(Gate *pGate);
+
 		// static test compression
 		void staticTestCompressionByReverseFaultSimulation(PatternProcessor *pPatternProcessor, FaultPtrList &originalFaultList);
 

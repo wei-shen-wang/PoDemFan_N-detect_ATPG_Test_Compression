@@ -1458,6 +1458,11 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	Circuit reinitializedCircuit = *pCircuit_;
 	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
 	Atpg atpgForV1 = Atpg(&reinitializedCircuit, &reinitializedSimulator);
+	atpgForV1.currentTargetFault_ = targetFault;
+	atpgForV1.numOfheadLines_ = this->numOfheadLines_;
+	atpgForV1.headLineGateIDs_ = this->headLineGateIDs_;
+	atpgForV1.gateID_to_lineType_ = this->gateID_to_lineType_;
+
 	Gate &atpgForV1_faulty_gate = atpgForV1.pCircuit_->circuitGates_[faulty_GateID];
 
 	for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
@@ -1559,7 +1564,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	atpgForV1.initializeObjectivesAndFrontiers();
 	for (Gate &gate : atpgForV1.pCircuit_->circuitGates_)
 	{
-		if (this->gateID_to_lineType_[gate.gateId_] == FREE_LINE)
+		if (atpgForV1.gateID_to_lineType_[gate.gateId_] == FREE_LINE)
 		{
 			atpgForV1.gateID_to_valModified_[gate.gateId_] = 1;
 		}
@@ -1591,7 +1596,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	}
 
 	// setting activation value righthere rightnow!
-	if (this->gateID_to_lineType_[faulty_GateID] == FREE_LINE)
+	if (atpgForV1.gateID_to_lineType_[faulty_GateID] == FREE_LINE)
 	{
 		atpgForV1_faulty_gate.atpgVal_ = faultActivationValue;
 		atpgForV1.backtrackImplicatedGateIDs_.push_back(faulty_GateID);
@@ -1605,12 +1610,11 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		atpgForV1_faulty_gate.atpgVal_ = faultActivationValue;
 		atpgForV1.backtrackImplicatedGateIDs_.push_back(faulty_GateID);
 		// schedule all of fanout gates of the targetfault gate
-		pushGateFanoutsToEventStack(faulty_GateID);
+		atpgForV1.pushGateFanoutsToEventStack(faulty_GateID);
 
 		// backtrace stops at HEADLINE
-		if (this->gateID_to_lineType_[faulty_GateID] == HEAD_LINE)
+		if (atpgForV1.gateID_to_lineType_[faulty_GateID] == HEAD_LINE)
 		{
-			// TODO check if not assigning value to faulty gate is correct here
 			atpgForV1.gateID_to_valModified_[faulty_GateID] = 1;
 		}
 		else if (atpgForV1_faulty_gate.gateType_ == Gate::INV || atpgForV1_faulty_gate.gateType_ == Gate::BUF || atpgForV1_faulty_gate.gateType_ == Gate::PO || atpgForV1_faulty_gate.gateType_ == Gate::PPO)
@@ -1621,8 +1625,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			valueTemp = atpgForV1_faulty_gate.isInverse();
 			pFaninGate->atpgVal_ = cXOR2(valueTemp, val);
 			atpgForV1.backtrackImplicatedGateIDs_.push_back(pFaninGate->gateId_);
-			pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
-			pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+			atpgForV1.pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+			atpgForV1.pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
 
 			if (backwardImplicationLevel < pFaninGate->numLevel_)
 			{
@@ -1637,8 +1641,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			{
 				Gate *pFaninGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1_faulty_gate.faninVector_[i]];
 				atpgForV1.backtrackImplicatedGateIDs_.push_back(pFaninGate->gateId_);
-				pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
-				pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+				atpgForV1.pushGateToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
+				atpgForV1.pushGateFanoutsToEventStack(atpgForV1_faulty_gate.faninVector_[0]);
 				if (backwardImplicationLevel < pFaninGate->numLevel_)
 				{
 					backwardImplicationLevel = pFaninGate->numLevel_;
@@ -1647,8 +1651,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		}
 		else
 		{
-			pushGateToEventStack(faulty_GateID);
-			if(backwardImplicationLevel < atpgForV1_faulty_gate.numLevel_)
+			atpgForV1.pushGateToEventStack(faulty_GateID);
+			if (backwardImplicationLevel < atpgForV1_faulty_gate.numLevel_)
 			{
 				backwardImplicationLevel = atpgForV1_faulty_gate.numLevel_;
 			}
@@ -1659,6 +1663,91 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 
 	while (!Finish)
 	{
+		// do implication
+		bool doImplicationResult;
+		if (implicationStatus != BACKWARD)
+		{
+			backwardImplicationLevel = 0;
+		}
+
+		do
+		{
+			if (implicationStatus == BACKWARD)
+			{
+				// BACKWARD loop:
+				// Do evaluateAndSetGateAtpgVal() to gates in
+				// circuitLevel_to_EventStack_ in BACKWARD order
+				// from bac
+				for (int i = backwardImplicationLevel; i >= 0; --i)
+				{
+					while (!atpgForV1.circuitLevel_to_EventStack_[i].empty())
+					{
+						Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1.popEventStack(i)];
+						implicationStatus = atpgForV1.evaluateAndSetGateAtpgValForTDFV1(pGate);
+						if (implicationStatus == CONFLICT)
+						{
+							doImplicationResult = false;
+							goto AFTER_DOIMPLICATION;
+						}
+					}
+				}
+			}
+
+			implicationStatus = FORWARD;
+			for (int i = 0; i < atpgForV1.pCircuit_->totalLvl_; ++i)
+			{
+				while (!atpgForV1.circuitLevel_to_EventStack_[i].empty())
+				{
+					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1.popEventStack(i)];
+					implicationStatus = atpgForV1.evaluateAndSetGateAtpgValForTDFV1(pGate);
+					if (implicationStatus == CONFLICT)
+					{
+						doImplicationResult = false;
+						goto AFTER_DOIMPLICATION;
+					}
+					else if (implicationStatus == BACKWARD)
+					{
+						backwardImplicationLevel = i - 1;
+						implicationStatus = BACKWARD;
+						break;
+					}
+				}
+
+				if (implicationStatus == BACKWARD)
+				{
+					break;
+				}
+			}
+
+		} while (implicationStatus == BACKWARD);
+		doImplicationResult = true;
+
+	AFTER_DOIMPLICATION:
+		if (doImplicationResult == false)
+		{
+			if (atpgForV1.backtrackDecisionTree_.lastNodeMarked())
+			{
+				++numOfBacktrack;
+			}
+
+			if (numOfBacktrack > BACKTRACK_LIMIT)
+			{
+				return TDF_V1_FAIL;
+				Finish = true;
+			}
+
+			atpgForV1.clearAllEvents();
+
+			// do backtrack
+			if (atpgForV1.backtrack(backwardImplicationLevel))
+			{
+				backtraceFlag = INITIAL;
+				implicationStatus = (backwardImplicationLevel > 0) ? FORWARD : BACKWARD;
+			}
+		}
+		else
+		{
+		}
 		// if fault activated:
 		// 		if any unjustified bound lines
 		// else
@@ -4280,6 +4369,44 @@ Gate *Atpg::findClosestToPO(std::vector<int> &gateVec, int &index)
 		}
 	}
 	return pCloseGate;
+}
+
+Atpg::IMPLICATION_STATUS Atpg::evaluateAndSetGateAtpgValForTDFV1(Gate *pGate)
+{
+	gateID_to_valModified_[pGate->gateId_] = 0;
+	if (gateID_to_lineType_[pGate->gateId_] == HEAD_LINE)
+	{
+		gateID_to_valModified_[pGate->gateId_] = 1;
+		return FORWARD;
+	}
+
+	// TODO - CHECK:
+	// there is no fault value in V1 generation so
+	// did not call evalutaeAndSetFaultyGateAtpgVal()
+
+	Value Val = evaluateGoodVal(*pGate);
+	if (pGate->atpgVal_ == Val)
+	{
+		if (Val != X)
+		{ // Good value is equal to the gate output, return FORWARD
+			gateID_to_valModified_[pGate->gateId_] = 1;
+		}
+		return FORWARD;
+	}
+	else if (pGate->atpgVal_ == X)
+	{
+		// set it to the evaluated value.
+		pGate->atpgVal_ = Val;
+		backtrackImplicatedGateIDs_.push_back(pGate->gateId_);
+		gateID_to_valModified_[pGate->gateId_] = 1;
+		pushGateFanoutsToEventStack(pGate->gateId_);
+		return FORWARD;
+	}
+	else if (Val != X)
+	{ // Good value is different to the gate output, return CONFLICT
+		return CONFLICT;
+	}
+	return doOneGateBackwardImplication(pGate); // atpgVal != X && Val == X
 }
 
 // **************************************************************************

@@ -127,7 +127,7 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 //              	First we simulate good value. Then for the pattern, if the
 //              	fault can be activated, inject the fault. When we inject enough
 //              	faults or reach the end of the fault list, we run fault simulation
-//              	for the injected faults and try to drop the detected faults.
+//              	for the injected faults and TRY TO DROP THE DETCTED FAULTS.
 //              	Here we can inject at most WORD_SIZE faults in one simulation.
 //              arguments:
 //              	[in] remainingFaults : The list of undetected faults.
@@ -158,7 +158,7 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 		if (numInjectedFaults_ == (int)WORD_SIZE || (it == remainingFaults.end() && numInjectedFaults_ > 0))
 		{
 			eventFaultSim();
-			parallelFaultCheckDetectionDropFaults(remainingFaults); // Drop fault here.
+			parallelFaultCheckDetectionDropFaults(remainingFaults); // DROP FAULT HERE
 			parallelFaultReset();
 		}
 	}
