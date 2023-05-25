@@ -1761,7 +1761,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				vecDelete(initialObjectives_, k);
 			}
 		}
-		if(!initialObjectives_.empty()){
+		if(initialObjectives_.empty()){
 			backtraceFlag = INITIAL;
 		}
 		// important note:
