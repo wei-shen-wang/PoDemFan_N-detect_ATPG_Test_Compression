@@ -138,6 +138,7 @@ namespace CoreNs
 		IMPLICATION_STATUS doOneGateBackwardImplication(Gate *pGate);
 
 		bool backtrack(int &BackImpLevel);
+		bool backtrack_for_V1(int &BackImpLevel);
 		bool continuationMeaningful(Gate *pLastDFrontier);
 		void updateUnjustifiedGateIDs();
 		void updateDFrontiers();

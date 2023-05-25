@@ -1739,27 +1739,35 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			atpgForV1.clearAllEvents();
 
 			// do backtrack
-			if (atpgForV1.backtrack(backwardImplicationLevel))
+			if (atpgForV1.backtrack_for_V1(backwardImplicationLevel))
 			{
 				backtraceFlag = INITIAL;
-				implicationStatus = (backwardImplicationLevel > 0) ? FORWARD : BACKWARD;
+				implicationStatus = (backwardImplicationLevel > 0) ? BACKWARD : FORWARD;
+			}
+			else
+			{
+				genStatus = TDF_V1_FAIL;
+				Finish = true;
+			}
+			continue;
+		}
+
+		// if continuation meaningful
+		updateUnjustifiedGateIDs();
+		for (int k = (int)initialObjectives_.size() - 1; k >= 0; --k)
+		{
+			if (gateID_to_valModified_[initialObjectives_[k]])
+			{
+				vecDelete(initialObjectives_, k);
 			}
 		}
-		else
-		{
+		if(!initialObjectives_.empty()){
+			backtraceFlag = INITIAL;
 		}
-		// if fault activated:
-		// 		if any unjustified bound lines
-		// else
-		// NO:
-		// 	backtrack
-		// 	backtrack fail:
-		// 		return TDF_V1_FAIL
-		// YES:
-		// 	check for unjustified bound lines
-		// 	justify all the free lines
-		// 	return TDF_V1_FOUND
-		//
+		// important note:
+		// no d frontiers anymore for v1
+		// has only one initial objectives
+		// many functions must be rewritten
 	}
 }
 
@@ -2501,6 +2509,94 @@ bool Atpg::backtrack(int &backwardImplicationLevel)
 	return false;
 }
 
+bool Atpg::backtrack_for_V1(int &backwardImplicationLevel)
+{
+	int backtrackPoint = 0;
+	int mDecisionGateID;
+	Value Val;
+	Gate *pDecisionGate = NULL;
+
+	while (!backtrackDecisionTree_.empty())
+	{
+		if (backtrackDecisionTree_.get(mDecisionGateID, backtrackPoint))
+		{
+			continue;
+		}
+
+		updateUnjustifiedGateIDs();
+		pDecisionGate = &pCircuit_->circuitGates_[mDecisionGateID];
+		Val = cINV(pDecisionGate->atpgVal_);
+
+		for (int i = backtrackPoint; i < (int)backtrackImplicatedGateIDs_.size(); ++i)
+		{
+			// Reset gates and their ouput in backtrackImplicatedGateIDs_, 
+			// starts from its backtrack point.
+			Gate *pGate = &pCircuit_->circuitGates_[backtrackImplicatedGateIDs_[i]];
+
+			pGate->atpgVal_ = X;
+			gateID_to_valModified_[pGate->gateId_] = 0;
+
+			for (int j = 0; j < pGate->numFO_; ++j)
+			{
+				Gate *pFanoutGate = &pCircuit_->circuitGates_[pGate->fanoutVector_[j]];
+				gateID_to_valModified_[pFanoutGate->gateId_] = 0;
+			}
+		}
+
+		backwardImplicationLevel = 0;
+
+		for (int i = backtrackPoint + 1; i < (int)backtrackImplicatedGateIDs_.size(); ++i)
+		{
+			// Find MAX level output in backtrackImplicatedGateIDs_ and save it to backwardImplicationLevel
+			Gate *pGate = &pCircuit_->circuitGates_[backtrackImplicatedGateIDs_[i]];
+
+			for (int j = 0; j < pGate->numFO_; ++j)
+			{
+				Gate *pFanoutGate = &pCircuit_->circuitGates_[pGate->fanoutVector_[j]];
+
+				if (pFanoutGate->atpgVal_ != X)
+				{
+					if (!gateID_to_valModified_[pFanoutGate->gateId_])
+					{
+						unjustifiedGateIDs_.push_back(pFanoutGate->gateId_);
+					}
+					pushGateToEventStack(pFanoutGate->gateId_);
+				}
+
+				if (pFanoutGate->numLevel_ > backwardImplicationLevel)
+				{
+					backwardImplicationLevel = pFanoutGate->numLevel_;
+				}
+			}
+		}
+
+		backtrackImplicatedGateIDs_.resize(backtrackPoint + 1); // cut the last backtracked point and its associated gates
+		pDecisionGate->atpgVal_ = Val;													// toggle its value, do backtrack, ex: 1=>0, 0=>1
+
+		if (gateID_to_lineType_[pDecisionGate->gateId_] == HEAD_LINE)
+		{
+			gateID_to_valModified_[pDecisionGate->gateId_] = 0;
+		}
+		else
+		{
+			pushGateToEventStack(pDecisionGate->gateId_);
+		}
+
+		pushGateFanoutsToEventStack(pDecisionGate->gateId_);
+
+		// Update unjustifiedGateIDs_ list
+		for (int k = (int)unjustifiedGateIDs_.size() - 1; k >= 0; --k)
+		{
+			if (pCircuit_->circuitGates_[unjustifiedGateIDs_[k]].atpgVal_ == X)
+			{
+				vecDelete(unjustifiedGateIDs_, k);
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 // **************************************************************************
 // Function   [ Atpg::continuationMeaningful ]
 // Commenter  [ WWS ]
@@ -2579,7 +2675,8 @@ bool Atpg::continuationMeaningful(Gate *pLastDFrontier)
 // **************************************************************************
 void Atpg::updateUnjustifiedGateIDs()
 {
-	// scan all gates in unjustifiedGateIDs_ List, if some gates were put into unjustified list but were implied afterwards by other gates, remove those gates from the unjustified list.
+	// scan all gates in unjustifiedGateIDs_ List, if some gates were put into unjustified list 
+	// but were implied afterwards by other gates, remove those gates from the unjustified list.
 	// if gateID_to_valModified_[mGate.gateId_]  == true, delete it from unjustifiedGateIDs_ List
 	// else push mGate into finalObjectives_ List
 	for (int i = unjustifiedGateIDs_.size() - 1; i >= 0; --i)
