@@ -143,8 +143,10 @@ namespace CoreNs
 		void updateUnjustifiedGateIDs();
 		void updateDFrontiers();
 		bool checkIfFaultHasPropagatedToPO(bool &faultHasPropagatedToPO);
+		bool checkIfFaultHasBeenActivated_by_V1(bool &faultHasBeenActivated);
 		bool checkForUnjustifiedBoundLines();
 		void findFinalObjective(BACKTRACE_STATUS &backtraceFlag, const bool &faultCanPropToPO, Gate *&pLastDFrontier);
+		void findFinalObjective_for_V1(BACKTRACE_STATUS &backtraceFlag, const bool &faultIsActivated);
 		void clearAllObjectives();
 		void assignAtpgValToFinalObjectiveGates();
 		void justifyFreeLines(Fault &originalFault);
@@ -169,6 +171,7 @@ namespace CoreNs
 		IMPLICATION_STATUS evaluateAndSetFaultyGateAtpgVal(Gate *pGate);
 
 		IMPLICATION_STATUS evaluateAndSetGateAtpgValForTDFV1(Gate *pGate);
+		IMPLICATION_STATUS evaluateAndSetFaultyGateAtpgValForTDFV1(Gate *pGate);
 
 		// static test compression
 		void staticTestCompressionByReverseFaultSimulation(PatternProcessor *pPatternProcessor, FaultPtrList &originalFaultList);
