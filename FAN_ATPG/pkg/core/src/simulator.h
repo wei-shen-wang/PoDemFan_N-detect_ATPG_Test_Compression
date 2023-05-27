@@ -31,6 +31,8 @@ namespace CoreNs
 		inline void goodValueEvaluation(const int &gateID);
 		inline void faultyValueEvaluation(const int &gateID);
 		inline void assignPatternToCircuitInputs(const Pattern &pattern);
+		inline void assignV1PatternToCircuitInputs(const Pattern &pattern);
+		inline void assignV2PatternToCircuitInputs(const Pattern &pattern);
 		void eventFaultSim();
 
 		// Parallel fault simulator.
@@ -65,10 +67,11 @@ namespace CoreNs
 		ParallelValue activated_; // Record which pattern is activated.
 
 		// Functions for parallel fault simulator.
+		void CheckTDFV1Activation(FaultPtrList &remainingFaults);
 		void parallelFaultReset();
 		bool parallelFaultCheckActivationOf_SAF_or_TDF_v2(const Fault *const pfault);
 		void parallelFaultFaultInjection(const Fault *const pfault, const size_t &injectFaultIndex);
-		void parallelFaultCheckDetectionDropFaults(FaultPtrList &remainingFaults);
+		void parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrList &remainingFaults);
 
 		// Functions for parallel pattern simulator.
 		void parallelPatternReset();
@@ -503,19 +506,8 @@ namespace CoreNs
 		pCircuit_->circuitGates_[gateID].faultSimHigh_ = (pCircuit_->circuitGates_[gateID].faultSimHigh_ & ~faultInjectLow_[gateID][0]) | faultInjectHigh_[gateID][0];
 	}
 
-	// **************************************************************************
-	// Function   [ Simulator::assignPatternToCircuitInputs ]
-	// Commenter  [ HKY, CYW, PYH ]
-	// Synopsis   [ usage: Assign test pattern to circuit PI & PPI.
-	//              description:
-	//              	Assign test pattern to circuit PI & PPI for further fault
-	//              	simulation.
-	//              arguments:
-	//              	[in] pattern : The pattern we want to assign.
-	//            ]
-	// Date       [ Ver. 1.1 started 2014/09/01 last modified 2023/01/06 ]
-	// **************************************************************************
-	inline void Simulator::assignPatternToCircuitInputs(const Pattern &pattern)
+	// For VLSI final
+	inline void Simulator::assignV1PatternToCircuitInputs(const Pattern &pattern)
 	{
 		// Set pattern : Apply the pattern to PIs.
 		for (int j = 0; j < pCircuit_->numPI_; ++j)
@@ -533,66 +525,118 @@ namespace CoreNs
 					pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_H;
 				}
 			}
-			if (pCircuit_->numFrame_ > 1)
-			{
-				pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimLow_ = PARA_L;
-				pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimHigh_ = PARA_L;
-				if (!pattern.PI2_.empty())
-				{
-					if (pattern.PI2_[j] == L)
-					{
-						pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimLow_ = PARA_H;
-					}
-					else if (pattern.PI2_[j] == H)
-					{
-						pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimHigh_ = PARA_H;
-					}
-				}
-			}
 		}
-
-		// Set pattern : Apply the pattern to PPIs.
-		for (int j = pCircuit_->numPI_; j < pCircuit_->numPI_ + pCircuit_->numPPI_; ++j)
+	}
+	inline void Simulator::assignV2PatternToCircuitInputs(const Pattern &pattern)
+	{
+		// Set pattern : Apply the pattern to PIs.
+		for (int j = 0; j < pCircuit_->numPI_; ++j)
 		{
 			pCircuit_->circuitGates_[j].goodSimLow_ = PARA_L;
 			pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_L;
-			if (!pattern.PPI_.empty())
+			if (!pattern.PI2_.empty())
 			{
-				if (pattern.PPI_[j - pCircuit_->numPI_] == L)
+				if (pattern.PI1_[j] == L)
 				{
 					pCircuit_->circuitGates_[j].goodSimLow_ = PARA_H;
 				}
-				else if (pattern.PPI_[j - pCircuit_->numPI_] == H)
+				else if (pattern.PI1_[j] == H)
 				{
 					pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_H;
 				}
 			}
-			if (pCircuit_->timeFrameConnectType_ == Circuit::SHIFT && pCircuit_->numFrame_ > 1)
+		}
+	}
+// **************************************************************************
+// Function   [ Simulator::assignPatternToCircuitInputs ]
+// Commenter  [ HKY, CYW, PYH ]
+// Synopsis   [ usage: Assign test pattern to circuit PI & PPI.
+//              description:
+//              	Assign test pattern to circuit PI & PPI for further fault
+//              	simulation.
+//              arguments:
+//              	[in] pattern : The pattern we want to assign.
+//            ]
+// Date       [ Ver. 1.1 started 2014/09/01 last modified 2023/01/06 ]
+// **************************************************************************
+inline void Simulator::assignPatternToCircuitInputs(const Pattern &pattern)
+{
+	// Set pattern : Apply the pattern to PIs.
+	for (int j = 0; j < pCircuit_->numPI_; ++j)
+	{
+		pCircuit_->circuitGates_[j].goodSimLow_ = PARA_L;
+		pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_L;
+		if (!pattern.PI1_.empty())
+		{
+			if (pattern.PI1_[j] == L)
 			{
-				for (int k = 1; k < pCircuit_->numFrame_; ++k)
+				pCircuit_->circuitGates_[j].goodSimLow_ = PARA_H;
+			}
+			else if (pattern.PI1_[j] == H)
+			{
+				pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_H;
+			}
+		}
+		if (pCircuit_->numFrame_ > 1)
+		{
+			pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimLow_ = PARA_L;
+			pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimHigh_ = PARA_L;
+			if (!pattern.PI2_.empty())
+			{
+				if (pattern.PI2_[j] == L)
 				{
-					pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimLow_ = PARA_L;
-					pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimHigh_ = PARA_L;
-					if (j == pCircuit_->numPI_)
-					{
-						if (!pattern.SI_.empty())
-						{
-							if (pattern.SI_[k - 1] == L)
-							{
-								pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimLow_ = PARA_H;
-							}
-							else if (pattern.SI_[k - 1] == H)
-							{
-								pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimHigh_ = PARA_H;
-							}
-						}
-					}
-					else
-					{
-					}
+					pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimLow_ = PARA_H;
+				}
+				else if (pattern.PI2_[j] == H)
+				{
+					pCircuit_->circuitGates_[j + pCircuit_->numGate_].goodSimHigh_ = PARA_H;
 				}
 			}
 		}
+	}
+
+	// Set pattern : Apply the pattern to PPIs.
+	for (int j = pCircuit_->numPI_; j < pCircuit_->numPI_ + pCircuit_->numPPI_; ++j)
+	{
+		pCircuit_->circuitGates_[j].goodSimLow_ = PARA_L;
+		pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_L;
+		if (!pattern.PPI_.empty())
+		{
+			if (pattern.PPI_[j - pCircuit_->numPI_] == L)
+			{
+				pCircuit_->circuitGates_[j].goodSimLow_ = PARA_H;
+			}
+			else if (pattern.PPI_[j - pCircuit_->numPI_] == H)
+			{
+				pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_H;
+			}
+		}
+		if (pCircuit_->timeFrameConnectType_ == Circuit::SHIFT && pCircuit_->numFrame_ > 1)
+		{
+			for (int k = 1; k < pCircuit_->numFrame_; ++k)
+			{
+				pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimLow_ = PARA_L;
+				pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimHigh_ = PARA_L;
+				if (j == pCircuit_->numPI_)
+				{
+					if (!pattern.SI_.empty())
+					{
+						if (pattern.SI_[k - 1] == L)
+						{
+							pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimLow_ = PARA_H;
+						}
+						else if (pattern.SI_[k - 1] == H)
+						{
+							pCircuit_->circuitGates_[j + pCircuit_->numGate_ * k].goodSimHigh_ = PARA_H;
+						}
+					}
+				}
+				else
+				{
+				}
+			}
+		}
+	}
 	}
 };
 
