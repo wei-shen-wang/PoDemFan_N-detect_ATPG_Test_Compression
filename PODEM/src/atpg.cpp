@@ -117,54 +117,56 @@ void ATPG::test()
 		switch (tdf_podem(fault_under_test, current_backtracks))
 		{
 			case TRUE:
-				if (total_attempt_num == 1)
+				// if (total_attempt_num == 1)
+				// {
+				/* form a vector */
+				vec.clear();
+				for (int i = 0; i < cktin.size(); i++)
 				{
-					/* form a vector */
-					vec.clear();
-					for (int i = 0; i < cktin.size(); i++)
+					if (cktin[i]->value == U)
 					{
-						if (cktin[i]->value == U)
-						{
-							cktin[i]->value = rand() & 01;
-						}
+						cktin[i]->value = rand() & 01;
 					}
-					if (last_bit == U)
-					{
-						last_bit = rand() & 01;
-					}
-					for (int i = 1; i < cktin.size(); i++)
-					{
-						vec.push_back(itoc(cktin[i]->value));
-					}
-					vec.push_back(itoc(last_bit));
-					vec.push_back(itoc(cktin[0]->value));
-					vectors.push_back(vec);
-					// cerr << vectors.back() << endl;
-					/*by defect, we want only one pattern per fault */
-					/*run a fault simulation, drop ALL detected faults */
-
-					tdfault_sim_a_vector(vec, current_detect_num);
-					total_detect_num += current_detect_num;
 				}
+				if (last_bit == U)
+				{
+					last_bit = rand() & 01;
+				}
+				for (int i = 1; i < cktin.size(); i++)
+				{
+					vec.push_back(itoc(cktin[i]->value));
+				}
+				vec.push_back(itoc(last_bit));
+				vec.push_back(itoc(cktin[0]->value));
+				vectors.push_back(vec);
+				// cerr << vectors.back() << endl;
+				/*by defect, we want only one pattern per fault */
+				/*run a fault simulation, drop ALL detected faults */
+
+				tdfault_sim_a_vector(vec, current_detect_num);
+				total_detect_num += current_detect_num;
+				// }
 				/* If we want mutiple petterns per fault,
 				 * NO fault simulation.  drop ONLY the fault under test */
-				else
-				{
-					fault_under_test->detect = TRUE;
-					/* drop fault_under_test */
-					flist_undetect.remove(fault_under_test);
-				}
+				// else // redundant
+				// {
+				// 	fault_under_test->detect = TRUE;
+				// 	/* drop fault_under_test */
+				// 	flist_undetect.remove(fault_under_test);
+				// }
 				break;
 			case FALSE:
 				fault_under_test->detect = REDUNDANT;
 				no_of_redundant_faults++;
+				fault_under_test->test_tried = true;
 				break;
 
 			case MAYBE:
 				no_of_aborted_faults++;
+				fault_under_test->test_tried = true;
 				break;
 		}
-		fault_under_test->test_tried = true;
+		// fault_under_test->test_tried = true;
 		fault_under_test = nullptr;
 		for (fptr fptr_ele : flist_undetect)
 		{
@@ -250,4 +252,6 @@ ATPG::FAULT::FAULT()
 	this->eqv_fault_num = 0;
 	this->to_swlist = 0;
 	this->fault_no = 0;
+	this->detected_time = 0;
+	this->detect_cur = 0;
 }

@@ -161,7 +161,7 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 		{
 			forward_imply(wfault);
 		}
-		while ((no_of_backtracks < backtrack_limit) && !no_test &&
+		while ((no_of_backtracks_v2 < backtrack_limit) && !no_test &&
 					 !(find_test))
 		{
 			/* check if test possible.   Fig. 7.1 */
@@ -344,7 +344,7 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 	}
 	decision_tree_v2.clear();
 
-	current_backtracks = no_of_backtracks;
+	current_backtracks += no_of_backtracks;
 	unmark_propagate_tree(fault->node);
 
 	if (find_test)

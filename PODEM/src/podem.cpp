@@ -306,12 +306,6 @@ ATPG::wptr ATPG::test_possible(const fptr fault)
 					object_level = 0;
 					break;
 				default:
-					// to be improved
-					/*---- comment out because C2670 has XOR ---------
-					fprintf(stderr,
-							"Internal Error(1st bp. in test_possible)!\n");
-					exit(-1);
-					-------------------------------------------------------*/
 					return (nullptr);
 			}
 			/* object_wire is the gate n output. */
@@ -355,12 +349,6 @@ ATPG::wptr ATPG::test_possible(const fptr fault)
 							object_level = 0;
 							break;
 						default:
-							// to be improved
-							/*---- comment out because C2670.sim has XOR ---------
-								 fprintf(stderr,
-										"Internal Error(2nd bp. in test_possible)!\n");
-								 exit(-1);
-							-------------------------------------------------------*/
 							return (nullptr);
 					}
 					/*objective wire is GUT output. */

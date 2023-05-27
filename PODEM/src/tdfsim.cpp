@@ -150,25 +150,26 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 	{
 		int fault_detected[num_of_pattern] = {0};
 		f = *pos;
-		if (f->detect == REDUNDANT)
-		{
-			continue;
-		} /* ignore redundant faults */
-		if (f->activate == FALSE)
-		{
-			if ((next(pos, 1) == flist_undetect.cend()) && num_of_fault > 0)
-			{
-				goto do_fsim;
-			}
-			else
-			{
-				continue;
-			}
-		} /* ignore redundant faults */
+		// f->detect_cur = FALSE;
+		// if (f->detect == REDUNDANT)
+		// {
+		// 	continue;
+		// } /* ignore redundant faults */
+		// if (f->activate == FALSE)
+		// {
+		// 	if ((next(pos, 1) == flist_undetect.cend()) && num_of_fault > 0)
+		// 	{
+		// 		goto do_fsim;
+		// 	}
+		// 	else
+		// 	{
+		// 		continue;
+		// 	}
+		// } /* ignore redundant faults */
 
 		/* consider only active (aka. excited) fault
 		 * (sa1 with correct output of 0 or sa0 with correct output of 1) */
-		if (f->fault_type != sort_wlist[f->to_swlist]->value)
+		if (f->fault_type != sort_wlist[f->to_swlist]->value && f->detect != REDUNDANT && f->activate == TRUE)
 		{
 
 			/* if f is a primary output or is directly connected to an primary output
@@ -176,7 +177,17 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 			if ((f->node->type == OUTPUT) ||
 					(f->io == GO && sort_wlist[f->to_swlist]->is_output()))
 			{
-				f->detect = TRUE;
+				// f->detect = TRUE;
+				// if (f->detect_cur == FALSE)
+				// {
+				// 	f->detected_time++;
+				// 	f->detect_cur = TRUE;
+				// }
+				f->detected_time++;
+				if (f->detected_time == detected_num)
+				{
+					f->detect = TRUE;
+				}
 			}
 			else
 			{
@@ -227,7 +238,12 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 						/* if the faulty_wire is a primary output, it is detected */
 						if (faulty_wire->is_output())
 						{
-							f->detect = TRUE;
+							// f->detect = TRUE;
+							f->detected_time++;
+							if (f->detected_time == detected_num)
+							{
+								f->detect = TRUE;
+							}
 						}
 						else
 						{
@@ -321,7 +337,11 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 			{
 				if (fault_detected[i] == 1)
 				{
-					simulated_fault_list[i]->detect = TRUE;
+					simulated_fault_list[i]->detected_time++;
+					if (simulated_fault_list[i]->detected_time == detected_num)
+					{
+						simulated_fault_list[i]->detect = TRUE;
+					}
 				}
 			}
 			num_of_fault = 0;					// reset the counter of faults in a packet

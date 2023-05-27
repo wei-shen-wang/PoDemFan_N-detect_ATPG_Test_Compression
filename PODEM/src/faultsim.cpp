@@ -107,6 +107,8 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 	for (auto pos = flist_undetect.cbegin(); pos != flist_undetect.cend(); ++pos)
 	{
 		f = *pos;
+		int fault_detected[num_of_faults_in_parallel] = {0}; // for n-det
+
 		if (f->detect == REDUNDANT)
 		{
 			continue;
@@ -122,7 +124,12 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 			if ((f->node->type == OUTPUT) ||
 					(f->io == GO && sort_wlist[f->to_swlist]->is_output()))
 			{
-				f->detect = TRUE;
+				// f->detect = TRUE;
+				f->detected_time++;
+				if (f->detected_time == detected_num)
+				{
+					f->detect = TRUE;
+				}
 			}
 			else
 			{
@@ -171,7 +178,12 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 						/* if the faulty_wire is a primary output, it is detected */
 						if (faulty_wire->is_output())
 						{
-							f->detect = TRUE;
+							// f->detect = TRUE;
+							f->detected_time++;
+							if (f->detected_time == detected_num)
+							{
+								f->detect = TRUE;
+							}
 						}
 						else
 						{
@@ -247,6 +259,7 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 				 */
 				if (w->is_output())
 				{ // if primary output
+					
 					for (i = 0; i < num_of_fault; i++)
 					{ // check every undetected fault
 						if (!(simulated_fault_list[i]->detect))
@@ -257,7 +270,7 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 								if (((w->wire_value2 & Mask[i]) ^ Unknown[i]) && // and not unknowns
 										((w->wire_value1 & Mask[i]) ^ Unknown[i]))
 								{
-									simulated_fault_list[i]->detect = TRUE; // then the fault is detected
+									fault_detected[i] = 1;
 								}
 							}
 						}
@@ -266,6 +279,17 @@ void ATPG::fault_sim_a_vector(const string &vec, int &num_of_current_detect)
 				w->wire_value2 = w->wire_value1; // reset to fault-free values
 																				 /*TODO*/
 			}																	 // pop out all faulty wires
+			for (i = 0; i < num_of_fault; i++)
+			{
+				if (fault_detected[i] == 1)
+				{
+					simulated_fault_list[i]->detected_time++;
+					if (simulated_fault_list[i]->detected_time == detected_num)
+					{
+						simulated_fault_list[i]->detect = TRUE;
+					}
+				}
+			}
 			num_of_fault = 0;									 // reset the counter of faults in a packet
 			start_wire_index = 10000;					 // reset this index to a very large value.
 		}																		 // end fault sim of a packet
