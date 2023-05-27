@@ -80,7 +80,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 	int fault_type;
 	int i, start_wire_index, nckt;
 	int num_of_fault;
-
+	
 	num_of_fault = 0; // counts the number of faults in a packet
 
 	/* num_of_current_detect is used to keep track of the number of undetected
