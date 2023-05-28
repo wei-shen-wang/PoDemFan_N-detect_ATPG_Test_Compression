@@ -32,7 +32,7 @@ void ATPG::transition_delay_fault_simulation(int &total_detect_num)
 	}
 } // fault_simulate_vectors
 
-void ATPG::tdfault_sim_a_vector(const string &vec, int &num_of_current_detect)
+bool ATPG::tdfault_sim_a_vector(const string &vec, int &num_of_current_detect)
 {
 	int i, nckt;
 	fptr f;
@@ -67,11 +67,11 @@ void ATPG::tdfault_sim_a_vector(const string &vec, int &num_of_current_detect)
 			f->activate = FALSE;
 	}
 
-	tdfault_sim_a_vector2(vec, num_of_current_detect);
+	return tdfault_sim_a_vector2(vec, num_of_current_detect);
 }
 
 /* fault simulate a single test vector */
-void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
+bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 {
 	wptr w, faulty_wire;
 	/* array of 16 fptrs, which points to the 16 faults in a simulation packet  */
@@ -80,6 +80,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 	int fault_type;
 	int i, start_wire_index, nckt;
 	int num_of_fault;
+	bool redundant = true;
 	
 	num_of_fault = 0; // counts the number of faults in a packet
 
@@ -183,6 +184,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 				// 	f->detected_time++;
 				// 	f->detect_cur = TRUE;
 				// }
+				redundant = false;
 				f->detected_time++;
 				if (f->detected_time == detected_num)
 				{
@@ -239,6 +241,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 						if (faulty_wire->is_output())
 						{
 							// f->detect = TRUE;
+							redundant = false;
 							f->detected_time++;
 							if (f->detected_time == detected_num)
 							{
@@ -337,6 +340,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 			{
 				if (fault_detected[i] == 1)
 				{
+					redundant = false;
 					simulated_fault_list[i]->detected_time++;
 					if (simulated_fault_list[i]->detected_time == detected_num)
 					{
@@ -370,7 +374,7 @@ void ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 					return false;
 				}
 			});
-
+	return redundant;
 } /* end of fault_sim_a_vector */
 
 void ATPG::generate_tdfault_list()
@@ -539,3 +543,21 @@ void ATPG::generate_tdfault_list()
 
 	// fprintf(stdout,"#number of equivalent faults = %d\n", fault_num);
 } /* end of generate_fault_list */
+
+void ATPG::reverse_order_fault_sim(){
+	flist_undetect.clear();
+	for (auto &f : flist)
+	{
+		f->detect = FALSE;
+		f->detected_time = 0;
+		flist_undetect.push_front(f.get());
+	}
+	int current_detect_num = 0;
+	for (int i = vectors.size() - 1; i >= 0; i--)
+	{
+		bool redundant = tdfault_sim_a_vector(vectors[i], current_detect_num);
+		if(redundant){
+			vectors.erase(vectors.begin() + i);
+		}
+	}
+}

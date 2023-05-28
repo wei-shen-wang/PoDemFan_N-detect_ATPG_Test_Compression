@@ -71,6 +71,7 @@ public:
 	void set_total_attempt_num(const int &);
 	void set_backtrack_limit(const int &);
 	void set_DTC(const bool &);
+	void set_STC(const bool &);
 	void set_SAF_atpg(const bool &);
 
 	/* defined in input.cpp */
@@ -89,11 +90,13 @@ public:
 	/*defined in tdfsim.cpp*/
 	void generate_tdfault_list();
 	void transition_delay_fault_simulation(int &);
-	void tdfault_sim_a_vector(const string &, int &);
-	void tdfault_sim_a_vector2(const string &, int &);
+	// for STC void => bool
+	bool tdfault_sim_a_vector(const string &, int &);
+	bool tdfault_sim_a_vector2(const string &, int &);
 	int num_of_tdf_fault{};
 	int detected_num{};
 	bool get_tdfsim_only() { return tdfsim_only; }
+	void reverse_order_fault_sim();
 
 	/* defined in atpg.cpp */
 	void test();
@@ -240,6 +243,7 @@ private:
 	/* TDF atpg */
 	bool SAF_atpg = false;
 	bool dynamic_test_compression = false;
+	bool static_test_compression = false;
 	int no_of_backtracks_v1{};
 	int no_of_backtracks_v2{};
 	int new_bit;

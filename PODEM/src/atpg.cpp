@@ -180,6 +180,12 @@ void ATPG::test()
 		// cerr << current_detect_num << endl;
 		no_of_calls++;
 	}
+
+	if (static_test_compression)
+	{
+		reverse_order_fault_sim();
+	}
+
 	in_vector_no = vectors.size();
 	fprintf(stdout, "\n");
 	for (int i = 0; i < vectors.size(); i++)

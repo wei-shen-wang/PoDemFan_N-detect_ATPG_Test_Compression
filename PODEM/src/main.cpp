@@ -55,6 +55,11 @@ int main(int argc, char *argv[])
 			atpg.set_DTC(true);
 			i += 1;
 		}
+		else if (strcmp(argv[i], "-stc") == 0)
+		{
+			atpg.set_STC(true);
+			i += 1;
+		}
 		// for N-detect fault simulation
 		else if (strcmp(argv[i], "-ndet") == 0)
 		{
@@ -159,6 +164,11 @@ void ATPG::set_backtrack_limit(const int &i)
 void ATPG::set_DTC(const bool &b)
 {
 	this->dynamic_test_compression = b;
+}
+
+void ATPG::set_STC(const bool &b)
+{
+	this->static_test_compression = b;
 }
 
 void ATPG::set_SAF_atpg(const bool &b)
