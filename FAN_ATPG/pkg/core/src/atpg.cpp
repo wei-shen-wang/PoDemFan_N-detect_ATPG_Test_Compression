@@ -1842,14 +1842,14 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			else
 			{
 				// scan each HEADLINE
-				for (int i = 0; i < numOfheadLines_; ++i)
+				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
 					if (!(atpgForV1_faulty_gate.gateType_ == Gate::PI || atpgForV1_faulty_gate.gateType_ == Gate::PPI || atpgForV1_faulty_gate.atpgVal_ == X))
 					{
-						fanoutFreeBacktrace(&atpgForV1_faulty_gate);
+						atpgForV1.fanoutFreeBacktrace(&atpgForV1_faulty_gate);
 					}
 				}
-				for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+				for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 				{
 					pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 				}
