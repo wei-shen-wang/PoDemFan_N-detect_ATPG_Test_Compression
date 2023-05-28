@@ -159,6 +159,7 @@ void Simulator::CheckTDFV1Activation(FaultPtrList &remainingFaults)
 			default:
 				break;
 		}
+		++it;
 	}
 }
 
