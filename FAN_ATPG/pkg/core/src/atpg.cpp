@@ -1568,15 +1568,15 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 
 	if (atpgForV1_faulty_gate.atpgVal_ == L)
 	{
-		// std::cerr << "It's L";
 		if (targetFault.faultType_ == Fault::STR)
 		{
-			// for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
-			// {
-			// 	pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
-			// }
-			// std::cerr << " and found" << '\n';
-			// return TDF_V1_FOUND;
+			std::cerr << "It's L";
+			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			{
+				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+			}
+			std::cerr << " and found" << '\n';
+			return TDF_V1_FOUND;
 		}
 		else
 		{
@@ -1587,15 +1587,15 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 
 	if (atpgForV1_faulty_gate.atpgVal_ == H)
 	{
-		// std::cerr << "It's H";
 		if (targetFault.faultType_ == Fault::STF)
 		{
-			// for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
-			// {
-			// 	pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
-			// }
-			// std::cerr << " and found" << '\n';
-			// return TDF_V1_FOUND;
+			std::cerr << "It's H";
+			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			{
+				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+			}
+			std::cerr << " and found" << '\n';
+			return TDF_V1_FOUND;
 		}
 		else
 		{
