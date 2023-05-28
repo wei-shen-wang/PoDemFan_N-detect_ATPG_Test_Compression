@@ -70,6 +70,7 @@ namespace CoreNs
 		int detection_;          // Number of detection.
 		FAULT_STATE faultState_; // Fault state.
 		int equivalent_;         // The number of equivalent faults, used to calculate uncollapsed fault coverage.
+		int V1activated_; 			 // For VLSI final. This variable is true if the fault is activated by V1 pattern, used in TDF sim.
 	};
 
 	class FaultListExtract
@@ -102,6 +103,7 @@ namespace CoreNs
 		detection_ = 0;
 		faultState_ = UD;
 		equivalent_ = 1;
+		V1activated_ = 0;
 	}
 
 	// inline Fault::Fault(const Fault& otherFault){
@@ -121,6 +123,7 @@ namespace CoreNs
 		detection_ = 0;
 		faultState_ = faultState;
 		equivalent_ = equivalent;
+		V1activated_ = 0;
 	}
 
 	inline FaultListExtract::FaultListExtract()
