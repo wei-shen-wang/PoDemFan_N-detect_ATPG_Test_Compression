@@ -535,6 +535,16 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 	SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetTDF(fTDF, pattern, false);
 	if (result == PATTERN_FOUND)
 	{
+		for (int i = 0; i < pattern.PI1_.size(); i++)
+		{
+			std::cerr << int(pattern.PI1_[i]);
+		}
+		std::cerr << ' ';
+		for (int i = 0; i < pattern.PI2_.size(); i++)
+		{
+			std::cerr << int(pattern.PI2_[i]);
+		}
+		std::cerr << '\n';
 		pPatternProcessor->patternVector_.push_back(pattern);
 		// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
 
@@ -543,10 +553,8 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
 
-		std::cerr << "before pffsop\n";
 		// TODO potential change
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
-		std::cerr << "after pffsop\n";
 		pSimulator_->goodSim();
 		writeGoodSimValToPatternPO(pPatternProcessor->patternVector_.back());
 	}
@@ -1240,7 +1248,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 	}
 	// SET BACKTRACE FLAG
 	backtraceFlag = INITIAL;
-
 	while (!Finish)
 	{
 		if (!doImplication(implicationStatus, backwardImplicationLevel))
@@ -1316,6 +1323,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				{
 					targetFault_for_V1.gateID_ = pCircuit_->circuitGates_[pCircuit_->circuitGates_[targetFault_for_V1.gateID_].faninVector_[targetFault.faultyLine_ - 1]].gateId_;
 				}
+
 				genStatus = generateTDFV1(targetFault_for_V1, pattern);
 				if (genStatus == TDF_V1_FAIL)
 				{
@@ -1356,8 +1364,19 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				}
 				else if (genStatus = TDF_V1_FOUND)
 				{
+					std::cerr << "test:";
+					for (int a = 0; a < pattern.PI1_.size(); a++)
+					{
+						std::cerr << int(pattern.PI1_[a]);
+					}
+					std::cerr << ' ';
+					for (int a = 0; a < pattern.PI1_.size(); a++)
+					{
+						std::cerr << int(pCircuit_->circuitGates_[a].atpgVal_);
+					}
+					std::cerr << '\n';
 					pattern.PI2_[0] = pCircuit_->circuitGates_[0].atpgVal_;
-					for (int i = 0; i < (pCircuit_->numPI_ + pCircuit_->numPPI_); ++i)
+					for (int i = 0; i < (pCircuit_->numPI_ + pCircuit_->numPPI_) - 1; ++i)
 					{
 						if (pCircuit_->circuitGates_[i + 1].atpgVal_ != X && pCircuit_->circuitGates_[i + 1].atpgVal_ != pattern.PI1_[i])
 						{
@@ -1462,7 +1481,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 // return v1_found if v1 found, return v1 failed and backtrack v2 if v1 is not found
 Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pattern &pattern)
 {
-	std::cerr<<"beginning of generateTDFV1\n";
 	int backwardImplicationLevel = 0; // backward imply level
 	int numOfBacktrack = 0;						// backtrack times
 	bool Finish = false;							// Finish is true when V1 generation process is done
