@@ -535,14 +535,15 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 	SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetTDF(fTDF, pattern, false);
 	if (result == PATTERN_FOUND)
 	{
+		std::cerr << "Pattern: PI1: ";
 		for (int i = 0; i < pattern.PI1_.size(); i++)
 		{
-			std::cerr << int(pattern.PI1_[i]);
+			printValue(pattern.PI1_[i], std::cerr);
 		}
-		std::cerr << ' ';
+		std::cerr << " PI2:";
 		for (int i = 0; i < pattern.PI2_.size(); i++)
 		{
-			std::cerr << int(pattern.PI2_[i]);
+			printValue(pattern.PI2_[i], std::cerr);
 		}
 		std::cerr << '\n';
 		pPatternProcessor->patternVector_.push_back(pattern);
@@ -1364,15 +1365,15 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				}
 				else if (genStatus = TDF_V1_FOUND)
 				{
-					std::cerr << "test:";
+					std::cerr << "Check: PI1: ";
 					for (int a = 0; a < pattern.PI1_.size(); a++)
 					{
-						std::cerr << int(pattern.PI1_[a]);
+						printValue(pattern.PI1_[a], std::cerr);
 					}
-					std::cerr << ' ';
+					std::cerr << " atpgVal_:";
 					for (int a = 0; a < pattern.PI1_.size(); a++)
 					{
-						std::cerr << int(pCircuit_->circuitGates_[a].atpgVal_);
+						printValue(pCircuit_->circuitGates_[a].atpgVal_, std::cerr);
 					}
 					std::cerr << '\n';
 					pattern.PI2_[0] = pCircuit_->circuitGates_[0].atpgVal_;
@@ -1553,38 +1554,45 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 
 	if (atpgForV1_faulty_gate.atpgVal_ == L)
 	{
+		std::cerr << "It's L";
 		if (targetFault.faultType_ == Fault::STR)
 		{
 			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
+			std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
 		{
+			std::cerr << " and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
 
 	if (atpgForV1_faulty_gate.atpgVal_ == H)
 	{
+		std::cerr << "It's H";
 		if (targetFault.faultType_ == Fault::STF)
 		{
 			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
+			std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
 		{
+			std::cerr << " and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
 	Value faultActivationValue;
 	if (atpgForV1_faulty_gate.atpgVal_ == X)
 	{
+		std::cerr << "It's X" << '\n';
 		if (targetFault.faultType_ == Fault::STR)
 		{
 			faultActivationValue = L;
