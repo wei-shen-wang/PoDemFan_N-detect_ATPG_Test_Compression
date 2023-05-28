@@ -105,102 +105,118 @@ int main(int argc, char **argv)
 	std::cout << "#  Input file name : " << inputFile << "\n";
 
 	// Main function
-	// fanMgr.sim->setNumDetection(ndet);
+	// Determine the content in the script
+	std::vector<std::string> scriptStr;
 	if (useTdfAtpg)
 	{
 		// Do TDF ATPG
-		// Change command if needed
-		std::vector<std::string> scriptStr = {
-				"read_lib techlib/mod_nangate45.mdt",
-				"read_netlist " + inputFile,
-				"report_netlist",
-				"build_circuit --frame 1",
-				"report_circuit",
-				"set_fault_type tdf",
-				"add_fault --all",
-				"set_static_compression on",
-				"set_dynamic_compression on",
-				"set_X-Fill on",
-				"run_atpg",
-				"report_statistics"};
-		for (i = 0; i < (int)scriptStr.size(); i++)
+		if (useCompression)
 		{
-			cmdMgr.exec(scriptStr[i]);
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type tdf",
+					"add_fault --all",
+					"set_static_compression on",
+					"set_dynamic_compression on",
+					"set_X-Fill on",
+					"set_pattern_type LOC",
+					"run_atpg",
+					"report_statistics"};
 		}
-		// Write(print) tdf pattern
-		std::cout << "\n";
-		std::cout << "#  Generated Patterns : \n";
-		for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
+		else
 		{
-			if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
-			{
-				std::cout << "T'";
-				for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
-				{
-					if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
-						std::cout << '0';
-					else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
-						std::cout << '1';
-					else
-						std::cout << 'X';
-				}
-				// Change this if needed
-				if (!fanMgr.pcoll->patternVector_[i].PI2_.empty())
-				{
-					if (fanMgr.pcoll->patternVector_[i].PI2_[fanMgr.pcoll->numPI_ - 1] == L)
-						std::cout << '0';
-					else if (fanMgr.pcoll->patternVector_[i].PI1_[fanMgr.pcoll->numPI_ - 1] == H)
-						std::cout << '1';
-					else
-						std::cout << 'X';
-				}
-			}
-			std::cout << "'\n";
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type tdf",
+					"add_fault --all",
+					"set_static_compression off",
+					"set_dynamic_compression off",
+					"set_X-Fill on",
+					"set_pattern_type LOC",
+					"run_atpg",
+					"report_statistics"};
 		}
-		std::cout << "\n";
 	}
 	else
 	{
 		// Do SAF ATPG
-		std::vector<std::string> scriptStr = {
-				"read_lib techlib/mod_nangate45.mdt",
-				"read_netlist " + inputFile,
-				"report_netlist",
-				"build_circuit --frame 1",
-				"report_circuit",
-				"set_fault_type saf",
-				"add_fault --all",
-				"set_static_compression on",
-				"set_dynamic_compression on",
-				"set_X-Fill on",
-				"run_atpg",
-				"report_statistics"};
-		for (i = 0; i < (int)scriptStr.size(); i++)
+		if (useCompression)
 		{
-			cmdMgr.exec(scriptStr[i]);
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type saf",
+					"add_fault --all",
+					"set_static_compression on",
+					"set_dynamic_compression on",
+					"set_X-Fill on",
+					"run_atpg",
+					"report_statistics"};
 		}
-		// Write(print) pattern
-		std::cout << "\n";
-		std::cout << "#  Generated Patterns : \n";
-		for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
+		else
 		{
-			if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
-			{
-				std::cout << "T'";
-				for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
-				{
-					if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
-						std::cout << '0';
-					else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
-						std::cout << '1';
-					else
-						std::cout << 'X';
-				}
-			}
-			std::cout << "'\n";
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type saf",
+					"add_fault --all",
+					"set_static_compression off",
+					"set_dynamic_compression off",
+					"set_X-Fill on",
+					"run_atpg",
+					"report_statistics"};
 		}
-		std::cout << "\n";
 	}
+	// Run commands
+	for (i = 0; i < (int)scriptStr.size(); i++)
+	{
+		cmdMgr.exec(scriptStr[i]);
+	}
+	// Write(print) pattern
+	std::cout << "\n";
+	std::cout << "#  Generated Patterns : \n";
+	for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
+	{
+		if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
+		{
+			std::cout << "T'";
+			for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
+			{
+				if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
+					std::cout << '0';
+				else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
+					std::cout << '1';
+				else
+					std::cout << 'X';
+			}
+			if (!fanMgr.pcoll->patternVector_[i].PI2_.empty())
+			{
+				std::cout << ' ';
+				if (fanMgr.pcoll->patternVector_[i].PI2_[0] == L)
+					std::cout << '0';
+				else if (fanMgr.pcoll->patternVector_[i].PI1_[0] == H)
+					std::cout << '1';
+				else
+					std::cout << 'X';
+			}
+		}
+		std::cout << "'\n";
+	}
+	std::cout << "\n";
 	return 0;
 
 	/*
