@@ -135,6 +135,7 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 		assignV2PatternToCircuitInputs(pattern);
 		parallelFaultFaultSim(remainingFaults);
 	}
+	std::cerr << "Remain " << remainingFaults.size() << " fault(s)\n";
 }
 
 // For VLSI final

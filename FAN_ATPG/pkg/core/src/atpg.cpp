@@ -1381,10 +1381,10 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 								pattern.PI2_[a] = pCircuit_->circuitGates_[a].atpgVal_;
 								break;
 							case D:
-								pattern.PI2_[a] = L;
+								pattern.PI2_[a] = H;
 								break;
 							case B:
-								pattern.PI2_[a] = H;
+								pattern.PI2_[a] = L;
 								break;
 						}
 						printValue(pattern.PI2_[a], std::cerr);
@@ -1571,7 +1571,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		if (targetFault.faultType_ == Fault::STR)
 		{
 			std::cerr << "It's L";
-			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
@@ -1590,7 +1590,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		if (targetFault.faultType_ == Fault::STF)
 		{
 			std::cerr << "It's H";
-			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
