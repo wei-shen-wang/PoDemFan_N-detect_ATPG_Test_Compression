@@ -1574,8 +1574,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
-				return TDF_V1_FOUND;
 			}
+			return TDF_V1_FOUND;
 		}
 		else
 		{
