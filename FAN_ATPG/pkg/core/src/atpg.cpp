@@ -1373,13 +1373,27 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 					std::cerr << " atpgVal_:";
 					for (int a = 0; a < pattern.PI1_.size(); a++)
 					{
-						printValue(pCircuit_->circuitGates_[a].atpgVal_, std::cerr);
+						switch (pCircuit_->circuitGates_[a].atpgVal_)
+						{
+							case L:
+							case H:
+							case X:
+								pattern.PI2_[a] = pCircuit_->circuitGates_[a].atpgVal_;
+								break;
+							case D:
+								pattern.PI2_[a] = L;
+								break;
+							case B:
+								pattern.PI2_[a] = H;
+								break;
+						}
+						printValue(pattern.PI2_[a], std::cerr);
 					}
 					std::cerr << '\n';
-					pattern.PI2_[0] = pCircuit_->circuitGates_[0].atpgVal_;
+					// pattern.PI2_[0] = pCircuit_->circuitGates_[0].atpgVal_;
 					for (int i = 0; i < (pCircuit_->numPI_ + pCircuit_->numPPI_) - 1; ++i)
 					{
-						if (pCircuit_->circuitGates_[i + 1].atpgVal_ != X && pCircuit_->circuitGates_[i + 1].atpgVal_ != pattern.PI1_[i])
+						if (pattern.PI2_[i + 1] != X && pattern.PI2_[i + 1] != pattern.PI1_[i])
 						{
 							std::cerr << "contradiction with PI1 and PI2 in generateSinglePatternOnTargetTDF\n";
 							exit(0);
@@ -1518,14 +1532,14 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				case L:
 				case H:
 				case X:
-					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_;
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
 				case D:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
 				case B:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = L;
 				default:
-					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_;
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
 			}
 		}
@@ -1554,38 +1568,38 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 
 	if (atpgForV1_faulty_gate.atpgVal_ == L)
 	{
-		std::cerr << "It's L";
+		// std::cerr << "It's L";
 		if (targetFault.faultType_ == Fault::STR)
 		{
-			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
-			{
-				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
-			}
-			std::cerr << " and found" << '\n';
-			return TDF_V1_FOUND;
+			// for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			// {
+			// 	pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+			// }
+			// std::cerr << " and found" << '\n';
+			// return TDF_V1_FOUND;
 		}
 		else
 		{
-			std::cerr << " and not found" << '\n';
+			std::cerr << "It's L and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
 
 	if (atpgForV1_faulty_gate.atpgVal_ == H)
 	{
-		std::cerr << "It's H";
+		// std::cerr << "It's H";
 		if (targetFault.faultType_ == Fault::STF)
 		{
-			for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
-			{
-				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
-			}
-			std::cerr << " and found" << '\n';
-			return TDF_V1_FOUND;
+			// for (int i = 0; i < atpgForV1.pCircuit_->totalGate_; ++i)
+			// {
+			// 	pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
+			// }
+			// std::cerr << " and found" << '\n';
+			// return TDF_V1_FOUND;
 		}
 		else
 		{
-			std::cerr << " and not found" << '\n';
+			std::cerr << "It's H and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
