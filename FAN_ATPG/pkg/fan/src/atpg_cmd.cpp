@@ -1277,6 +1277,10 @@ RunAtpgCmd::RunAtpgCmd(const std::string &name, FanMgr *fanMgr) : Cmd(name)
 	opt->addFlag("h");
 	opt->addFlag("help");
 	optMgr_.regOpt(opt);
+	opt = new Opt(Opt::STR_REQ, "num of detections", "NUM");
+	opt->addFlag("n");
+	opt->addFlag("ndet");
+	optMgr_.regOpt(opt);
 }
 
 RunAtpgCmd::~RunAtpgCmd() {}
@@ -1308,9 +1312,15 @@ bool RunAtpgCmd::exec(const std::vector<std::string> &argv)
 		fanMgr_->fListExtract->extractFaultFromCircuit(fanMgr_->cir);
 	}
 
+	int ndet = 1;
+	if (optMgr_.isFlagSet("ndet"))
+	{
+		ndet = atoi(optMgr_.getFlagVar("ndet").c_str());
+	}
 	if (!fanMgr_->sim)
 	{
 		fanMgr_->sim = new Simulator(fanMgr_->cir);
+		fanMgr_->sim->setNumDetection(ndet);
 	}
 
 	delete fanMgr_->atpg;
@@ -1604,11 +1614,13 @@ bool TdfAtpgCmd::exec(const std::vector<std::string> &argv)
 
 	if (optMgr_.isFlagSet("tdfatpg"))
 	{
-		std::cout << "Doing TDF ATPG" << "\n";
+		std::cout << "Doing TDF ATPG"
+							<< "\n";
 	}
 	else
 	{
-		std::cout << "Doing SAF ATPG" << "\n";
+		std::cout << "Doing SAF ATPG"
+							<< "\n";
 	}
 
 	int ndet = 1;
@@ -1620,11 +1632,13 @@ bool TdfAtpgCmd::exec(const std::vector<std::string> &argv)
 
 	if (optMgr_.isFlagSet("compression"))
 	{
-		std::cout << "Compression on" << "\n";
+		std::cout << "Compression on"
+							<< "\n";
 	}
 	else
 	{
-		std::cout << "Compression off" << "\n";
+		std::cout << "Compression off"
+							<< "\n";
 	}
 
 	std::cout << "Input circuit file is " << optMgr_.getParsedArg(0).c_str() << "\n";

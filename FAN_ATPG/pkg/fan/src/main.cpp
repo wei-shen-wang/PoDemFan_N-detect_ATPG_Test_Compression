@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 					"set_dynamic_compression on",
 					"set_X-Fill on",
 					"set_pattern_type LOC",
-					"run_atpg",
+					"run_atpg -n " + std::to_string(ndet),
 					"report_statistics"};
 		}
 		else
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 					"set_dynamic_compression off",
 					"set_X-Fill on",
 					"set_pattern_type LOC",
-					"run_atpg",
+					"run_atpg -n " + std::to_string(ndet),
 					"report_statistics"};
 		}
 	}
@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 					"set_static_compression on",
 					"set_dynamic_compression on",
 					"set_X-Fill on",
-					"run_atpg",
+					"run_atpg -n " + std::to_string(ndet),
 					"report_statistics"};
 		}
 		else
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 					"set_static_compression off",
 					"set_dynamic_compression off",
 					"set_X-Fill on",
-					"run_atpg",
+					"run_atpg -n " + std::to_string(ndet),
 					"report_statistics"};
 		}
 	}
