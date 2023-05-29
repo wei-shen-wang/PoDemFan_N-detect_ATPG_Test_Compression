@@ -536,11 +536,11 @@ namespace CoreNs
 			pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_L;
 			if (!pattern.PI2_.empty())
 			{
-				if (pattern.PI1_[j] == L)
+				if (pattern.PI2_[j] == L)
 				{
 					pCircuit_->circuitGates_[j].goodSimLow_ = PARA_H;
 				}
-				else if (pattern.PI1_[j] == H)
+				else if (pattern.PI2_[j] == H)
 				{
 					pCircuit_->circuitGates_[j].goodSimHigh_ = PARA_H;
 				}

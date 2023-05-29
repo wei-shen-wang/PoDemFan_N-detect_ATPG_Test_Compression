@@ -192,6 +192,12 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 	FaultPtrListIter it = remainingFaults.begin();
 	while (it != remainingFaults.end())
 	{
+		if (!(*it)->V1activated_ && ((*it)->faultType_ == Fault::STR || (*it)->faultType_ == Fault::STF))
+		{
+			++it;
+			continue;
+		}
+		(*it)->V1activated_ = 0;
 		// If fault is activated, inject fault.
 		if (parallelFaultCheckActivationOf_SAF_or_TDF_v2(*it))
 		{
@@ -461,15 +467,15 @@ void Simulator::parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrLi
 		{
 			continue;
 		}
-		// Check V1 activation for TDF
-		if (remainingFaults.front()->faultType_ == Fault::STR || remainingFaults.front()->faultType_ == Fault::STF)
-		{
-			if (!(*injectedFaults_[i])->V1activated_)
-			{
-				continue;
-			}
-			(*injectedFaults_[i])->V1activated_ = 0;
-		}
+		// // Check V1 activation for TDF
+		// if (remainingFaults.front()->faultType_ == Fault::STR || remainingFaults.front()->faultType_ == Fault::STF)
+		// {
+		// 	if (!(*injectedFaults_[i])->V1activated_)
+		// 	{
+		// 		continue;
+		// 	}
+		// 	(*injectedFaults_[i])->V1activated_ = 0;
+		// }
 		++((*injectedFaults_[i])->detection_);
 		if ((*injectedFaults_[i])->detection_ >= numDetection_)
 		{
