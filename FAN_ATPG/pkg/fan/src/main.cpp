@@ -6,6 +6,7 @@
 // **************************************************************************
 
 #include <cstdlib>
+#include <cstring> // For VLSI final
 
 #include "common/sys_cmd.h"
 #include "setup_cmd.h"
@@ -26,36 +27,199 @@ int main(int argc, char **argv)
 {
 
 	// start calculating resource usage
-	TmUsage tmusg;
-	tmusg.totalStart();
+	// TmUsage tmusg;
+	// tmusg.totalStart();
 
 	// initialize option manager
 	OptMgr optMgr;
 	initOpt(optMgr);
 
-	optMgr.parse(argc, argv);
-	if (optMgr.isFlagSet("h"))
-	{
-		optMgr.usage();
-		exit(0);
-	}
+	// optMgr.parse(argc, argv);
+	// if (optMgr.isFlagSet("h"))
+	// {
+	// 	optMgr.usage();
+	// 	exit(0);
+	// }
 
 	// initialize command manager and FAN manager
 	FanMgr fanMgr;
 	CmdMgr cmdMgr;
 	initCmd(cmdMgr, fanMgr);
-	CmdMgr::Result res = CmdMgr::SUCCESS;
+	// CmdMgr::Result res = CmdMgr::SUCCESS;
 
 	// welcome message
-	printWelcome();
+	// printWelcome();
 
 	// run startup commands
-	if (optMgr.isFlagSet("f"))
+	// if (optMgr.isFlagSet("f"))
+	// {
+	// 	std::string cmd = "source " + optMgr.getFlagVar("f");
+	// 	res = cmdMgr.exec(cmd);
+	// }
+
+	// For VLSI final
+	std::string inputFile, vectorFile;
+	int i = 1;
+	int ndet = 1;
+	bool useTdfAtpg = false, useCompression = false;
+
+	/* parse the input switches & arguments */
+	while (i < argc)
 	{
-		std::string cmd = "source " + optMgr.getFlagVar("f");
-		res = cmdMgr.exec(cmd);
+		if (strcmp(argv[i], "-tdfatpg") == 0)
+		{
+			useTdfAtpg = true;
+			i++;
+		}
+		else if (strcmp(argv[i], "-ndet") == 0)
+		{
+			ndet = atoi(argv[i + 1]);
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-compression") == 0)
+		{
+			useCompression = true;
+			i++;
+		}
+		// else if (strcmp(argv[i], "-fsim") == 0)
+		// {
+		// 	vectorFile = string(argv[i + 1]);
+		// 	i += 2;
+		// }
+		// else if (strcmp(argv[i], "-tdfsim") == 0)
+		// {
+		// 	vectorFile = string(argv[i + 1]);
+		// 	i += 2;
+		// }
+		else
+		{
+			inputFile = std::string(argv[i]);
+			i++;
+		}
 	}
 
+	// Check parse content
+	std::cout << "#  TDF ATPG : " << ((useTdfAtpg) ? "on" : "off") << "\n";
+	std::cout << "#  N-det : " << ndet << "\n";
+	std::cout << "#  Test compression : " << ((useCompression) ? "on" : "off") << "\n";
+	std::cout << "#  Input file name : " << inputFile << "\n";
+
+	// Main function
+	// Determine the content in the script
+	std::vector<std::string> scriptStr;
+	if (useTdfAtpg)
+	{
+		// Do TDF ATPG
+		if (useCompression)
+		{
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type tdf",
+					"add_fault --all",
+					"set_static_compression on",
+					"set_dynamic_compression on",
+					"set_X-Fill on",
+					"set_pattern_type LOC",
+					"run_atpg -n " + std::to_string(ndet),
+					"report_statistics"};
+		}
+		else
+		{
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type tdf",
+					"add_fault --all",
+					"set_static_compression off",
+					"set_dynamic_compression off",
+					"set_X-Fill on",
+					"set_pattern_type LOC",
+					"run_atpg -n " + std::to_string(ndet),
+					"report_statistics"};
+		}
+	}
+	else
+	{
+		// Do SAF ATPG
+		if (useCompression)
+		{
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type saf",
+					"add_fault --all",
+					"set_static_compression on",
+					"set_dynamic_compression on",
+					"set_X-Fill on",
+					"run_atpg -n " + std::to_string(ndet),
+					"report_statistics"};
+		}
+		else
+		{
+			scriptStr = {
+					"read_lib techlib/mod_nangate45.mdt",
+					"read_netlist " + inputFile,
+					"report_netlist",
+					"build_circuit --frame 1",
+					"report_circuit",
+					"set_fault_type saf",
+					"add_fault --all",
+					"set_static_compression off",
+					"set_dynamic_compression off",
+					"set_X-Fill on",
+					"run_atpg -n " + std::to_string(ndet),
+					"report_statistics"};
+		}
+	}
+	// Run commands
+	for (i = 0; i < (int)scriptStr.size(); i++)
+	{
+		cmdMgr.exec(scriptStr[i]);
+	}
+	// Write(print) pattern
+	std::cout << "\n";
+	std::cout << "#  Generated Patterns : \n";
+	for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
+	{
+		if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
+		{
+			std::cout << "T'";
+			for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
+			{
+				if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
+					std::cout << '0';
+				else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
+					std::cout << '1';
+				else
+					std::cout << 'X';
+			}
+			if (!fanMgr.pcoll->patternVector_[i].PI2_.empty())
+			{
+				std::cout << ' ';
+				if (fanMgr.pcoll->patternVector_[i].PI2_[0] == L)
+					std::cout << '0';
+				else if (fanMgr.pcoll->patternVector_[i].PI1_[0] == H)
+					std::cout << '1';
+				else
+					std::cout << 'X';
+			}
+		}
+		std::cout << "'\n";
+	}
+	std::cout << "\n";
+	return 0;
+
+	/*
 	// enter user interface
 	while (res != CmdMgr::EXIT)
 	{
@@ -67,25 +231,37 @@ int main(int argc, char **argv)
 			continue;
 		}
 	}
+	*/
 
 	// goodbye
-	printGoodbye(tmusg);
+	// printGoodbye(tmusg);
 	return 0;
 }
 
 void printWelcome()
 {
-	std::cout << "#  ==========================================================================" << "\n";
-	std::cout << "#" << "\n";
-	std::cout << "#                                   FAN ATPG" << "\n";
-	std::cout << "#" << "\n";
-	std::cout << "#              Copyright(c) Laboratory of Dependable Systems(II)," << "\n";
-	std::cout << "#                Graduate Institute of Electronics Engineering," << "\n";
-	std::cout << "#                          National Taiwan University" << "\n";
-	std::cout << "#                             All Rights Reserved." << "\n";
-	std::cout << "#" << "\n";
-	std::cout << "#  ==========================================================================" << "\n";
-	std::cout << "#" << "\n";
+	std::cout << "#  =========================================================================="
+						<< "\n";
+	std::cout << "#"
+						<< "\n";
+	std::cout << "#                                   FAN ATPG"
+						<< "\n";
+	std::cout << "#"
+						<< "\n";
+	std::cout << "#              Copyright(c) Laboratory of Dependable Systems(II),"
+						<< "\n";
+	std::cout << "#                Graduate Institute of Electronics Engineering,"
+						<< "\n";
+	std::cout << "#                          National Taiwan University"
+						<< "\n";
+	std::cout << "#                             All Rights Reserved."
+						<< "\n";
+	std::cout << "#"
+						<< "\n";
+	std::cout << "#  =========================================================================="
+						<< "\n";
+	std::cout << "#"
+						<< "\n";
 
 	// system information
 	// OS kernel
@@ -94,13 +270,15 @@ void printWelcome()
 	char buf[128];
 	std::cout << "#  Kernel:   ";
 	if (!systemOutput)
-		std::cout << "UNKNOWN" << "\n";
+		std::cout << "UNKNOWN"
+							<< "\n";
 	else
 	{
 		if (fgets(buf, sizeof(buf), systemOutput))
 			std::cout << buf;
 		else
-			std::cout << "UNKNOWN" << "\n";
+			std::cout << "UNKNOWN"
+								<< "\n";
 		pclose(systemOutput);
 	}
 
@@ -108,13 +286,15 @@ void printWelcome()
 	systemOutput = popen("uname -i 2> /dev/null", "r");
 	std::cout << "#  Platform: ";
 	if (!systemOutput)
-		std::cout << "UNKNOWN" << "\n";
+		std::cout << "UNKNOWN"
+							<< "\n";
 	else
 	{
 		if (fgets(buf, sizeof(buf), systemOutput))
 			std::cout << buf;
 		else
-			std::cout << "UNKNOWN" << "\n";
+			std::cout << "UNKNOWN"
+								<< "\n";
 		pclose(systemOutput);
 	}
 
@@ -122,7 +302,8 @@ void printWelcome()
 	FILE *meminfo = fopen("/proc/meminfo", "r");
 	std::cout << "#  Memory:   ";
 	if (!meminfo)
-		std::cout << "UNKNOWN" << "\n";
+		std::cout << "UNKNOWN"
+							<< "\n";
 	else
 	{
 		while (fgets(buf, 128, meminfo))
@@ -130,27 +311,32 @@ void printWelcome()
 			char *ch;
 			if ((ch = strstr(buf, "MemTotal:")))
 			{
-				std::cout << (double)atol(ch + 9) / 1024.0 << " MB" << "\n";
+				std::cout << (double)atol(ch + 9) / 1024.0 << " MB"
+									<< "\n";
 				break;
 			}
 		}
 		fclose(meminfo);
 	}
 
-	std::cout << "#" << "\n";
+	std::cout << "#"
+						<< "\n";
 }
 
 void printGoodbye(TmUsage &tmusg)
 {
 	TmStat stat;
 	tmusg.getTotalUsage(stat);
-	std::cout << "#  Goodbye" << "\n";
+	std::cout << "#  Goodbye"
+						<< "\n";
 	std::cout << "#  Runtime        ";
 	std::cout << "real " << (double)stat.rTime / 1000000.0 << " s        ";
 	std::cout << "user " << (double)stat.uTime / 1000000.0 << " s        ";
-	std::cout << "sys " << (double)stat.sTime / 1000000.0 << " s" << "\n";
+	std::cout << "sys " << (double)stat.sTime / 1000000.0 << " s"
+						<< "\n";
 	std::cout << "#  Memory         ";
-	std::cout << "peak " << (double)stat.vmPeak / 1024.0 << " MB" << "\n";
+	std::cout << "peak " << (double)stat.vmPeak / 1024.0 << " MB"
+						<< "\n";
 }
 
 void initOpt(OptMgr &mgr)
@@ -234,6 +420,7 @@ void initCmd(CmdMgr &cmdMgr, FanMgr &fanMgr)
 	Cmd *writeStilCmd = new WriteStilCmd("write_to_STIL", &fanMgr);
 	Cmd *writeProcCmd = new WriteProcCmd("write_test_procedure_file", &fanMgr);
 	Cmd *addScanChainsCmd = new AddScanChainsCmd("add_scan_chains", &fanMgr);
+	Cmd *tdfAtpgCmd = new TdfAtpgCmd("test", &fanMgr); // For VLSI final, not used
 	cmdMgr.regCmd("ATPG", readPatCmd);
 	cmdMgr.regCmd("ATPG", reportPatCmd);
 	cmdMgr.regCmd("ATPG", addFaultCmd);
@@ -250,6 +437,7 @@ void initCmd(CmdMgr &cmdMgr, FanMgr &fanMgr)
 	cmdMgr.regCmd("ATPG", writeStilCmd);
 	cmdMgr.regCmd("ATPG", writeProcCmd);
 	cmdMgr.regCmd("ATPG", addScanChainsCmd);
+	cmdMgr.regCmd("ATPG", tdfAtpgCmd); // For VLSI final, not used
 
 	// misc commands
 	Cmd *reportPatFormatCmd = new ReportPatFormatCmd("report_pattern_format");

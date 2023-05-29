@@ -23,7 +23,7 @@ vector<string> PI;
 vector<string> PO;
 vector<Gate> gates;
 
-string idx[9] = {".A", ".B", ".C", ".D", ".E", ".F", ".G", ".H", ".I"};
+string idx[9] = {".A1", ".A2", ".A3", ".A4", ".A5", ".A6", ".A7", ".A8", ".A9"};
 
 void error(const string &message)
 {
@@ -77,13 +77,13 @@ string findType(string gatetype)
 	{
 		if (targc != 5)
 			error("Bad Gate Record");
-		return ("INVXL");
+		return ("INV_X1");
 	}
 	if (gatetype == "buf" || gatetype == "BUF")
 	{
 		if (targc != 5)
 			error("Bad Gate Record");
-		return ("BUFX20");
+		return ("BUF_X1");
 	}
 	if (gatetype == "and" || gatetype == "AND")
 		type = "AND";
@@ -115,15 +115,15 @@ string findType(string gatetype)
 	{
 		if (type == "AND" || type == "OR")
 		{
-			return "BUFX20";
+			return "BUF_X1";
 		}
 		if (type == "NAND" || type == "NOR")
 		{
-			return "INVXL";
+			return "INV_X1";
 		}
 		error("wrong input number");
 	}
-	type = type + to_string(numIn) + "XL";
+	type = type + to_string(numIn) + "_X1";
 	return type;
 }
 
@@ -250,20 +250,20 @@ void generate_verilog(string filename)
 		{
 			file << idx[i] << "(" << gate.in[i] << "), ";
 		}
-		file << ".Y(" << gate.out << ") );" << endl;
+		file << ".ZN(" << gate.out << ") );" << endl;
 	}
 	file << endl
 			 << "endmodule" << endl;
 }
 
-int main(int argc, char *argv[])
+int convertCkt2Vlog(std::string inputCktFile, std::string outputVlogFile)
 {
-	if (argc != 3)
-	{
-		cout << "Usage: " << argv[0] << " input.ckt output.v" << endl;
-		return 1;
-	}
-	parse_circuit(argv[1]);
-	generate_verilog(argv[2]);
+	// if (argc != 3)
+	// {
+	// 	cout << "Usage: " << argv[0] << " input.ckt output.v" << endl;
+	// 	return 1;
+	// }
+	parse_circuit(inputCktFile);
+	generate_verilog(outputVlogFile);
 	return 0;
 }

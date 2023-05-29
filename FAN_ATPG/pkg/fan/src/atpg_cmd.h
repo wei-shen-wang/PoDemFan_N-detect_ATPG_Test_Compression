@@ -198,6 +198,19 @@ private:
     FanMgr *fanMgr_;
 };
 
+// For VLSI final, not used
+class TdfAtpgCmd : public CommonNs::Cmd
+{
+	public:
+		TdfAtpgCmd(const std::string &name, FanMgr *fanMgr);
+		~TdfAtpgCmd();
+
+		bool exec(const std::vector<std::string> &argv);
+
+	private:
+		FanMgr *fanMgr_;
+};
+
 };
 
 #endif
