@@ -101,8 +101,6 @@ namespace CoreNs
 		std::vector<int> isInEventStack_;													// 1 if a gate is in an event stack, 0 otherwise
 		Gate *firstTimeFrameHeadLine_;														// this parameter is for multiple time frame
 
-		Atpg *pBackupAtpg_;
-
 		// ---------------private methods----------------- //
 		// void backupCurrentAtpg();
 		// void recoverFromBackupAtpg();
@@ -255,7 +253,6 @@ namespace CoreNs
 		backtrackImplicatedGateIDs_.reserve(pCircuit->totalGate_);
 		firstTimeFrameHeadLine_ = NULL;
 		isInEventStack_.resize(pCircuit->totalGate_);
-		pBackupAtpg_ = NULL;
 	}
 
 	// inline Atpg::Atpg(const Atpg &otherAtpg)
@@ -1118,7 +1115,14 @@ namespace CoreNs
 			{
 				if (pattern.PI2_[i] == X)
 				{
-					pattern.PI2_[i] = rand() % 2;
+					if (i == 0)
+					{
+						pattern.PI2_[i] = rand() % 2;
+					}
+					else
+					{
+						pattern.PI2_[i] = pattern.PI1_[i - 1];
+					}
 				}
 			}
 		}
