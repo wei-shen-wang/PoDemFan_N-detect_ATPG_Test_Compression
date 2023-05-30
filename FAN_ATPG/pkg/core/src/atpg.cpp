@@ -1372,7 +1372,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 					// 	printValue(pattern.PI1_[a], std::cerr);
 					// }
 					// std::cerr << " atpgVal_:";
-					for (int a = 0; a < pattern.PI1_.size(); a++)
+					for (int a = 0; a < pCircuit_->numPI_; a++)
 					{
 						switch (pCircuit_->circuitGates_[a].atpgVal_)
 						{
@@ -1854,9 +1854,10 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				// scan each HEADLINE
 				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
-					if (!(atpgForV1_faulty_gate.gateType_ == Gate::PI || atpgForV1_faulty_gate.gateType_ == Gate::PPI || atpgForV1_faulty_gate.atpgVal_ == X))
+					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]];
+					if (!pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X)
 					{
-						atpgForV1.fanoutFreeBacktrace(&atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]]);
+						atpgForV1.fanoutFreeBacktrace(pGate);
 					}
 				}
 				for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
