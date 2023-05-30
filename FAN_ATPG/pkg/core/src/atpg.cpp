@@ -535,17 +535,20 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 	SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetTDF(fTDF, pattern, false);
 	if (result == PATTERN_FOUND)
 	{
-		std::cerr << "Pattern: PI1: ";
-		for (int i = 0; i < pattern.PI1_.size(); i++)
-		{
-			printValue(pattern.PI1_[i], std::cerr);
-		}
-		std::cerr << " PI2:";
-		for (int i = 0; i < pattern.PI2_.size(); i++)
-		{
-			printValue(pattern.PI2_[i], std::cerr);
-		}
-		std::cerr << '\n';
+		resetPrevAtpgValStored();
+		clearAllFaultEffectByEvaluation();
+		storeCurrentAtpgVal();
+		// std::cerr << "Pattern: PI1: ";
+		// for (int i = 0; i < pattern.PI1_.size(); i++)
+		// {
+		// printValue(pattern.PI1_[i], std::cerr);
+		// }
+		// std::cerr << " PI2:";
+		// for (int i = 0; i < pattern.PI2_.size(); i++)
+		// {
+		// printValue(pattern.PI2_[i], std::cerr);
+		// }
+		// std::cerr << '\n';
 		pPatternProcessor->patternVector_.push_back(pattern);
 		// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
 
@@ -554,10 +557,9 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
 
-		// TODO potential change
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 		pSimulator_->goodSim();
-		writeGoodSimValToPatternPO(pPatternProcessor->patternVector_.back());
+		// writeGoodSimValToPatternPO(pPatternProcessor->patternVector_.back());
 	}
 	else if (result == FAULT_UNTESTABLE)
 	{
@@ -1324,7 +1326,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				{
 					targetFault_for_V1.gateID_ = pCircuit_->circuitGates_[pCircuit_->circuitGates_[targetFault_for_V1.gateID_].faninVector_[targetFault.faultyLine_ - 1]].gateId_;
 				}
-
 				genStatus = generateTDFV1(targetFault_for_V1, pattern);
 				if (genStatus == TDF_V1_FAIL)
 				{
@@ -1365,12 +1366,12 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				}
 				else if (genStatus = TDF_V1_FOUND)
 				{
-					std::cerr << "Check: PI1: ";
-					for (int a = 0; a < pattern.PI1_.size(); a++)
-					{
-						printValue(pattern.PI1_[a], std::cerr);
-					}
-					std::cerr << " atpgVal_:";
+					// std::cerr << "Check: PI1: ";
+					// for (int a = 0; a < pattern.PI1_.size(); a++)
+					// {
+					// 	printValue(pattern.PI1_[a], std::cerr);
+					// }
+					// std::cerr << " atpgVal_:";
 					for (int a = 0; a < pattern.PI1_.size(); a++)
 					{
 						switch (pCircuit_->circuitGates_[a].atpgVal_)
@@ -1387,9 +1388,9 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 								pattern.PI2_[a] = L;
 								break;
 						}
-						printValue(pattern.PI2_[a], std::cerr);
+						// printValue(pattern.PI2_[a], std::cerr);
 					}
-					std::cerr << '\n';
+					// std::cerr << '\n';
 					// pattern.PI2_[0] = pCircuit_->circuitGates_[0].atpgVal_;
 					for (int i = 0; i < (pCircuit_->numPI_ + pCircuit_->numPPI_) - 1; ++i)
 					{
@@ -1527,7 +1528,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		atpgForV1.pCircuit_->circuitGates_[i].prevAtpgValStored_ = X;
 		if (i < atpgForV1.pCircuit_->numPI_ - 1)
 		{
-			switch (atpgForV1.pCircuit_->circuitGates_[i + 1].atpgVal_)
+			switch (this->pCircuit_->circuitGates_[i + 1].atpgVal_)
 			{
 				case L:
 				case H:
@@ -1570,17 +1571,17 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	{
 		if (targetFault.faultType_ == Fault::STR)
 		{
-			std::cerr << "It's L";
+			// std::cerr << "It's L";
 			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
-			std::cerr << " and found" << '\n';
+			// std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
 		{
-			std::cerr << "It's L and not found" << '\n';
+			// std::cerr << "It's L and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
@@ -1589,24 +1590,25 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	{
 		if (targetFault.faultType_ == Fault::STF)
 		{
-			std::cerr << "It's H";
+			// std::cerr << "It's H";
 			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
-			std::cerr << " and found" << '\n';
+			// std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
 		{
-			std::cerr << "It's H and not found" << '\n';
+			// std::cerr << "It's H and not found" << '\n';
 			return TDF_V1_FAIL;
 		}
 	}
+
 	Value faultActivationValue;
 	if (atpgForV1_faulty_gate.atpgVal_ == X)
 	{
-		std::cerr << "It's X" << '\n';
+		// std::cerr << "It's X" << '\n';
 		if (targetFault.faultType_ == Fault::STR)
 		{
 			faultActivationValue = L;
@@ -1616,6 +1618,14 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			faultActivationValue = H;
 		}
 	}
+	// for (int i = 0; i < pCircuit_->numPI_ - 1; ++i)
+	// {
+	// if (this->pCircuit_->circuitGates_[i + 1].atpgVal_ != X && this->pCircuit_->circuitGates_[i + 1].atpgVal_ != atpgForV1.pCircuit_->circuitGates_[i].atpgVal_)
+	// {
+	// std::cerr << "[DEBUG] contradiction with PI1 and PI2\n";
+	// exit(0);
+	// }
+	// }
 	// Gate *gFaultyLine = &atpgForV1_faulty_gate;
 	// if (targetFault.faultyLine_ != 0)
 	// {
@@ -1860,22 +1870,22 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		else
 		{
 			// not activated
-			if (backtrackDecisionTree_.lastNodeMarked())
+			if (atpgForV1.backtrackDecisionTree_.lastNodeMarked())
 			{
 				++numOfBacktrack;
 			}
 			// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
 			if (numOfBacktrack > BACKTRACK_LIMIT)
 			{
-				genStatus = ABORT;
+				genStatus = TDF_V1_FAIL;
 				Finish = true;
 			}
 
-			clearAllEvents();
+			atpgForV1.clearAllEvents();
 
 			// IS THERE AN UNTRIED COMBINATION OF VALUES ON ASSIGNED HEAD LINES OR FANOUT POINTS?
 			// If yes, SET UNTRIED COMBINATION OF VALUES in the function backtrack
-			if (backtrack(backwardImplicationLevel))
+			if (atpgForV1.backtrack_for_V1(backwardImplicationLevel))
 			{
 				// backtrack success and initializeForSinglePatternGeneration the data
 				// SET BACKTRACE FLAG

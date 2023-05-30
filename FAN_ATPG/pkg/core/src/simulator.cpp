@@ -135,7 +135,7 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 		assignV2PatternToCircuitInputs(pattern);
 		parallelFaultFaultSim(remainingFaults);
 	}
-	std::cerr << "Remain " << remainingFaults.size() << " fault(s)\n";
+	// std::cerr << "Remain " << remainingFaults.size() << " fault(s)\n";
 }
 
 // For VLSI final
@@ -208,9 +208,11 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 		// Run fault simulation if enough fault or end of fault list.
 		if (numInjectedFaults_ == (int)WORD_SIZE || (it == remainingFaults.end() && numInjectedFaults_ > 0))
 		{
+			std::cerr << "[HERE]0\n";
 			eventFaultSim();
 			parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(remainingFaults); // DROP FAULT HERE
 			parallelFaultReset();
+			std::cerr << "[HERE]1\n";
 		}
 	}
 }
