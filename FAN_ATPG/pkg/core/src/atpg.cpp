@@ -1508,7 +1508,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FAIL;
 
 	// the reinitialized circuit still holds the atpgVal_ of the original Atpg
-	Circuit reinitializedCircuit = *pCircuit_;
+	Circuit reinitializedCircuit = *(this->pCircuit_);
 	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
 	Atpg atpgForV1 = Atpg(&reinitializedCircuit, &reinitializedSimulator);
 	atpgForV1.currentTargetFault_ = targetFault;
@@ -1620,16 +1620,11 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	}
 	// for (int i = 0; i < pCircuit_->numPI_ - 1; ++i)
 	// {
-	// if (this->pCircuit_->circuitGates_[i + 1].atpgVal_ != X && this->pCircuit_->circuitGates_[i + 1].atpgVal_ != atpgForV1.pCircuit_->circuitGates_[i].atpgVal_)
-	// {
-	// std::cerr << "[DEBUG] contradiction with PI1 and PI2\n";
-	// exit(0);
-	// }
-	// }
-	// Gate *gFaultyLine = &atpgForV1_faulty_gate;
-	// if (targetFault.faultyLine_ != 0)
-	// {
-	// 	gFaultyLine = &atpgForV1.pCircuit_->circuitGates_[gFaultyLine->faninVector_[targetFault.faultyLine_ - 1]];
+	// 	if (this->pCircuit_->circuitGates_[i + 1].atpgVal_ != X && this->pCircuit_->circuitGates_[i + 1].atpgVal_ != atpgForV1.pCircuit_->circuitGates_[i].atpgVal_)
+	// 	{
+	// 		std::cerr << "[DEBUG] contradiction with PI1 and PI2\n";
+	// 		exit(0);
+	// 	}
 	// }
 	atpgForV1.initializeObjectivesAndFrontiers();
 	for (Gate &gate : atpgForV1.pCircuit_->circuitGates_)

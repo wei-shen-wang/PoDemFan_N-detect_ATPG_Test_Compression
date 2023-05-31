@@ -195,7 +195,7 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 		if (!(*it)->V1activated_ && ((*it)->faultType_ == Fault::STR || (*it)->faultType_ == Fault::STF))
 		{
 			++it;
-			continue;
+			goto RUNFAULTSIM;
 		}
 		(*it)->V1activated_ = 0;
 		// If fault is activated, inject fault.
@@ -205,14 +205,13 @@ void Simulator::parallelFaultFaultSim(FaultPtrList &remainingFaults)
 			injectedFaults_[numInjectedFaults_++] = it;
 		}
 		++it;
+	RUNFAULTSIM:
 		// Run fault simulation if enough fault or end of fault list.
 		if (numInjectedFaults_ == (int)WORD_SIZE || (it == remainingFaults.end() && numInjectedFaults_ > 0))
 		{
-			std::cerr << "[HERE]0\n";
 			eventFaultSim();
 			parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(remainingFaults); // DROP FAULT HERE
 			parallelFaultReset();
-			std::cerr << "[HERE]1\n";
 		}
 	}
 }
