@@ -73,6 +73,8 @@ public:
 	void set_DTC(const bool &);
 	void set_STC(const bool &);
 	void set_SAF_atpg(const bool &);
+	void set_podemx_fail_limit(const int &);
+	void set_podemx_flist_type(const int &);
 
 	/* defined in input.cpp */
 	void input(const string &);
@@ -97,6 +99,7 @@ public:
 	int detected_num{};
 	bool get_tdfsim_only() { return tdfsim_only; }
 	void reverse_order_fault_sim();
+
 
 	/* defined in atpg.cpp */
 	void test();
@@ -250,11 +253,16 @@ private:
 	int last_bit;
 	int ncktwire;
 	int ncktin;
+	// podex parameter
+	int flist_type = 1; // 1: queue, 2: stack, 3: backtrace PO
+	int fail_continuous_limit = 1000000;
 
 	int tdf_podem(fptr, int &);
 	int tdf_set_uniquely_implied_value(fptr);
 	void shift();
 	void undo_shift();
+	void tdf_podemx();
+	int tdf_podemx_secondary(fptr);
 
 	/* declared in display.cpp */
 	void display_line(fptr);
@@ -411,6 +419,6 @@ private:
 		int to_swlist;			 /* index to the sort_wlist[] */
 		int fault_no;				 /* fault index */
 		int detected_time{}; /* for N-detect */
-		short detect_cur;
+		bool tried_dtc;  		 // for DTC flag
 	};										 // class FAULT
 };											 // class ATPG

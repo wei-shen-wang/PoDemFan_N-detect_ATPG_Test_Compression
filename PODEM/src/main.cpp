@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		}
 		else if (strcmp(argv[i], "-tdfatpg") == 0)
 		{
-      atpg.set_SAF_atpg(false);
+			atpg.set_SAF_atpg(false);
 			i += 1;
 		}
 		else if (strcmp(argv[i], "-dtc") == 0)
@@ -59,6 +59,16 @@ int main(int argc, char *argv[])
 		{
 			atpg.set_STC(true);
 			i += 1;
+		}
+		else if (strcmp(argv[i], "-pdxflist") == 0) // podemx flist type, 1~3, default=1
+		{
+			atpg.set_podemx_flist_type(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-pdxfail") == 0) // podemx continuous fail limit
+		{
+			atpg.set_podemx_fail_limit(atoi(argv[i + 1]));
+			i += 2;
 		}
 		// for N-detect fault simulation
 		else if (strcmp(argv[i], "-ndet") == 0)
@@ -174,4 +184,14 @@ void ATPG::set_STC(const bool &b)
 void ATPG::set_SAF_atpg(const bool &b)
 {
 	this->SAF_atpg = b;
+}
+
+void ATPG::set_podemx_fail_limit(const int &i)
+{
+	this->fail_continuous_limit = i;
+}
+
+void ATPG::set_podemx_flist_type(const int &i)
+{
+	this->flist_type = i;
 }

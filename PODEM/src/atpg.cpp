@@ -259,5 +259,5 @@ ATPG::FAULT::FAULT()
 	this->to_swlist = 0;
 	this->fault_no = 0;
 	this->detected_time = 0;
-	this->detect_cur = 0;
+	this->tried_dtc = false;
 }

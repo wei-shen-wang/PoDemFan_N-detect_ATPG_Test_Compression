@@ -1,5 +1,6 @@
 #include "atpg.h"
-
+#include <queue>
+#include <stack>
 #define CONFLICT 2
 
 int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
@@ -349,7 +350,11 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 
 	if (find_test)
 	{
-		/* normally, we want one pattern per fault */
+		if (dynamic_test_compression)
+		{
+			tdf_podemx();
+		}
+
 		for (i = 0; i < ncktin; i++)
 		{
 			switch (cktin[i]->value)
@@ -495,5 +500,406 @@ void ATPG::undo_shift()
 	for (int i = ncktin; i < ncktwire; i++)
 	{
 		sort_wlist[i]->value = U;
+	}
+}
+
+void ATPG::tdf_podemx()
+{
+	double start_t = ((double)clock());
+	// cerr << "start PODEMX\n";
+	int U_PO_idx = 0;
+	// vector<fptr> flist_sec;
+	// flist_sec.reserve(distance(flist_undetect.begin(), flist_undetect.end()));
+	queue<fptr> flist_sec_q;
+	stack<fptr> flist_sec_s;
+
+	switch (flist_type)
+	{
+		case 1:
+			for (fptr fptr_ele : flist_undetect)
+			{
+				// fptr_ele->tried_dtc = false;
+				if (fptr_ele->detect != REDUNDANT)
+				{
+					flist_sec_q.push(fptr_ele);
+				}
+			}
+			if (flist_sec_q.empty())
+			{
+				return;
+			}
+			break;
+		case 2:
+			for (fptr fptr_ele : flist_undetect)
+			{
+				// fptr_ele->tried_dtc = false;
+				if (fptr_ele->detect != REDUNDANT)
+				{
+					flist_sec_s.push(fptr_ele);
+				}
+			}
+			if (flist_sec_s.empty())
+			{
+				return;
+			}
+			break;
+		case 3:
+			// extract fault list inside while loop!
+			break;
+	}
+
+	int continuous_fail_count = 0;
+	while (continuous_fail_count < fail_continuous_limit)
+	{
+		// terminating condition: 1. no unknown PO,
+		// 2. check unknown PO still exist
+		while (U_PO_idx < cktout.size())
+		{
+			if (cktout[U_PO_idx]->value == U)
+			{
+				break;
+			}
+			U_PO_idx++;
+		}
+		if (U_PO_idx == cktout.size())
+		{
+			return;
+		}
+		fptr f_secondary = nullptr;
+
+		// backtrace from unknown PO!
+		wptr unknown_PO = cktout[U_PO_idx];
+		queue<wptr> q_wire;
+		queue<fptr> q_fault;
+
+		switch (flist_type)
+		{
+			case 1:
+				if (flist_sec_q.empty())
+				{
+					return;
+				}
+				f_secondary = flist_sec_q.front();
+				flist_sec_q.pop();
+				break;
+			case 2:
+				if (flist_sec_s.empty())
+				{
+					return;
+				}
+				f_secondary = flist_sec_s.top();
+				flist_sec_s.pop();
+				break;
+			case 3:
+				// TODO
+				q_wire.push(unknown_PO);
+				break;
+		}
+
+		for (int i = 0; i < ncktin; i++)
+		{
+			switch (cktin[i]->value)
+			{
+				case 0:
+				case 1:
+				case U:
+					break;
+				case D:
+					cktin[i]->value = 1;
+					break;
+				case D_bar:
+					cktin[i]->value = 0;
+					break;
+			}
+		}
+		switch (last_bit)
+		{
+			case 0:
+			case 1:
+			case U:
+				break;
+			case D:
+				last_bit = 1;
+				break;
+			case D_bar:
+				last_bit = 0;
+				break;
+		}
+		switch (new_bit)
+		{
+			case 0:
+			case 1:
+			case U:
+				break;
+			case D:
+				new_bit = 1;
+				break;
+			case D_bar:
+				new_bit = 0;
+				break;
+		}
+
+		for (int i = 0; i < ncktin; ++i)
+			sort_wlist[i]->set_changed();
+		for (int i = ncktin; i < ncktwire; ++i)
+			sort_wlist[i]->value = U;
+
+		sim();
+
+		// step 3. generate a test cube for f2 based on t1
+		// do podemx
+
+		switch (tdf_podemx_secondary(f_secondary))
+		{
+			case TRUE:
+				continuous_fail_count = 0;
+				// cerr << "	success\n";
+				break;
+			default:
+				continuous_fail_count++;
+				// cerr << "	qq\n";
+				break;
+		}
+		// f_secondary->tried_dtc = true;
+	}
+}
+
+int ATPG::tdf_podemx_secondary(const fptr fault)
+{
+	// v2 then v1
+	int i;
+	wptr wpi;													// points to the PI currently being assigned
+	forward_list<wptr> decision_tree; // design_tree (a LIFO stack)
+	wptr wfault;
+
+	// store original PIs for primary fault
+	vector<int> prime_PI(ncktin + 2);
+	for (i = 0; i < ncktin; i++)
+	{
+		prime_PI[i] = cktin[i]->value;
+	}
+	prime_PI[ncktin] = last_bit;
+	prime_PI[ncktin + 1] = new_bit;
+
+	no_of_backtracks = 0;
+	find_test = false;
+	no_test = false;
+
+	// gen v2
+	mark_propagate_tree(fault->node);
+	/* Fig 7 starts here */
+	/* set the initial objective, assign the first PI.  Fig 7.P1 */
+	switch (set_uniquely_implied_value(fault))
+	{
+		case TRUE: // if a  PI is assigned
+			sim();	 // Fig 7.3
+			wfault = fault_evaluate(fault);
+			if (wfault != nullptr)
+				forward_imply(wfault); // propagate fault effect
+			if (check_test())
+				find_test = true; // if fault effect reaches PO, done. Fig 7.10
+			break;
+		case CONFLICT:
+			no_test = true; // cannot achieve initial objective, no test
+			break;
+		case FALSE:
+			break; // if no PI is reached, keep on backtracing. Fig 7.A
+	}
+
+	/* loop in Fig 7.ABC
+	 * quit the loop when either one of the three conditions is met:
+	 * 1. number of backtracks is equal to or larger than limit
+	 * 2. no_test
+	 * 3. already find a test pattern AND no_of_patterns meets required total_attempt_num */
+	while ((no_of_backtracks < backtrack_limit) && !no_test &&
+				 !(find_test))
+	{
+		/* check if test possible.   Fig. 7.1 */
+		if (wpi = test_possible(fault))
+		{
+			wpi->set_changed();
+			/* insert a new PI into decision_tree */
+			decision_tree.push_front(wpi);
+		}
+		else
+		{ // no test possible using this assignment, backtrack.
+
+			while (!decision_tree.empty() && (wpi == nullptr))
+			{
+				/* if both 01 already tried, backtrack. Fig.7.7 */
+				if (decision_tree.front()->is_all_assigned())
+				{
+					decision_tree.front()->remove_all_assigned(); // clear the ALL_ASSIGNED flag
+					decision_tree.front()->value = U;							// do not assign 0 or 1
+					decision_tree.front()->set_changed();					// this PI has been changed
+					/* remove this PI in decision tree.  see dashed nodes in Fig 6 */
+					decision_tree.pop_front();
+				}
+				/* else, flip last decision, flag ALL_ASSIGNED. Fig. 7.8 */
+				else
+				{
+					decision_tree.front()->value = decision_tree.front()->value ^ 1; // flip last decision
+					decision_tree.front()->set_changed();														 // this PI has been changed
+					decision_tree.front()->set_all_assigned();
+					no_of_backtracks++;
+					wpi = decision_tree.front();
+				}
+			} // while decision tree && ! wpi
+			if (wpi == nullptr)
+				no_test = true; // decision tree empty,  Fig 7.9
+		}										// no test possible
+
+		/* this again loop is to generate multiple patterns for a single fault
+		 * this part is NOT in the original PODEM paper  */
+
+		if (wpi)
+		{
+			sim();
+			if (wfault = fault_evaluate(fault))
+				forward_imply(wfault);
+			if (check_test())
+			{
+				find_test = true;
+			} // if check_test()
+		}		// again
+	}			// while (three conditions)
+
+	/* clear everything */
+	for (wptr wptr_ele : decision_tree)
+	{
+		wptr_ele->remove_all_assigned();
+	}
+	decision_tree.clear();
+
+	undo_shift();
+	sim();
+	no_of_backtracks = 0;
+
+	// gen v1
+	if (find_test)
+	{
+		find_test = false;
+		wptr obj_wire;
+		if (fault->io)
+		{
+			obj_wire = fault->node->owire.front();
+		}
+		else
+		{
+			obj_wire = fault->node->iwire[fault->index];
+		}
+		if (fault->fault_type == obj_wire->value)
+		{
+			find_test = true; // v1 activated + v2 detected
+		}
+		else
+		{
+
+			switch (tdf_set_uniquely_implied_value(fault))
+			{
+				case TRUE: // if a  PI is assigned
+					sim();	 // Fig 7.3
+					break;
+				case CONFLICT:
+					no_test = true; // cannot achieve initial objective, no test
+					break;
+				case FALSE:
+					break; // if no PI is reached, keep on backtracing. Fig 7.A
+			}
+			while ((no_of_backtracks < backtrack_limit) && !no_test /*&& !(find_test)*/)
+			{
+				// wpi = find_pi_assignment(obj_wire, fault->fault_type);
+				if (wpi = find_pi_assignment(obj_wire, fault->fault_type))
+				{
+					// cerr << "good wpi\n";
+					wpi->set_changed();
+					decision_tree.push_front(wpi);
+				}
+				else
+				{
+					// cerr << "no wpi\n";
+
+					while (!decision_tree.empty() && (wpi == nullptr))
+					{
+						/* backtrack */
+						if (decision_tree.front()->is_all_assigned())
+						{
+							decision_tree.front()->remove_all_assigned();
+							decision_tree.front()->value = U;
+							decision_tree.front()->set_changed();
+							decision_tree.pop_front();
+						}
+						/* flip last decision */
+						else
+						{
+							decision_tree.front()->value = decision_tree.front()->value ^ 1;
+							decision_tree.front()->set_changed();
+							decision_tree.front()->set_all_assigned();
+							no_of_backtracks++;
+							wpi = decision_tree.front();
+						}
+					}
+
+					// goto again; // if we want multiple patterns per fault
+				}
+				// cerr << "still alive\n";
+				if (wpi != nullptr)
+				{
+					sim();
+					if (obj_wire->value == fault->fault_type)
+					{
+						// shift();
+						// sim();
+						find_test = true;
+						break;
+					}
+				}
+				else
+				{
+					// no_test = true;
+					break;
+				}
+			}
+		}
+	}
+
+	for (wptr wptr_ele : decision_tree)
+	{
+		wptr_ele->remove_all_assigned();
+	}
+	decision_tree.clear();
+
+	unmark_propagate_tree(fault->node);
+
+	if (find_test)
+	{
+		shift();
+		return (TRUE);
+	}
+
+	// restore prime PIs for next secondary fault
+	for (i = 0; i < ncktin; i++)
+	{
+		cktin[i]->value = prime_PI[i];
+	}
+	last_bit = prime_PI[ncktin];
+	new_bit = prime_PI[ncktin + 1];
+	for (int i = 0; i < ncktin; i++)
+	{
+		sort_wlist[i]->set_changed();
+	}
+
+	for (int i = ncktin; i < ncktwire; i++)
+	{
+		sort_wlist[i]->value = U;
+	}
+	sim();
+	if (no_test)
+	{
+		return (FALSE);
+	}
+	else
+	{
+		return (MAYBE);
 	}
 }
