@@ -131,6 +131,14 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 		// Check V1 activation
 		assignV1PatternToCircuitInputs(pattern);
 		CheckTDFV1Activation(remainingFaults);
+
+		for (int i = 0; i < pCircuit_->numGate_; ++i)
+		{
+			pCircuit_->circuitGates_[i].faultSimHigh_ = PARA_L;
+			pCircuit_->circuitGates_[i].faultSimLow_ = PARA_L;
+			pCircuit_->circuitGates_[i].goodSimHigh_ = PARA_L;
+			pCircuit_->circuitGates_[i].goodSimLow_ = PARA_L;
+		}
 		// Check V2 detection and drop faults
 		assignV2PatternToCircuitInputs(pattern);
 		parallelFaultFaultSim(remainingFaults);
@@ -162,6 +170,22 @@ void Simulator::CheckTDFV1Activation(FaultPtrList &remainingFaults)
 		}
 		++it;
 	}
+	// for (Fault *pFault : remainingFaults)
+	// {
+	// 	const int &faultyGate = pFault->faultyLine_ == 0 ? pFault->gateID_ : pCircuit_->circuitGates_[pFault->gateID_].faninVector_[pFault->faultyLine_ - 1];
+	// 	if (pFault->faultType_ == Fault::STR && pCircuit_->circuitGates_[faultyGate].goodSimHigh_ == PARA_L && pCircuit_->circuitGates_[faultyGate].goodSimLow_ == PARA_H)
+	// 	{
+	// 		pFault->V1activated_ = 1;
+	// 	}
+	// 	else if (pFault->faultType_ == Fault::STF && pCircuit_->circuitGates_[faultyGate].goodSimHigh_ == PARA_H && pCircuit_->circuitGates_[faultyGate].goodSimLow_ == PARA_L)
+	// 	{
+	// 		pFault->V1activated_ = 1;
+	// 	}
+	// 	else
+	// 	{
+	// 		pFault->V1activated_ = 0;
+	// 	}
+	// }
 }
 
 // **************************************************************************

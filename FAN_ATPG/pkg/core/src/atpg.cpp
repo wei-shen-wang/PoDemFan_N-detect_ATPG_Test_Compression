@@ -527,7 +527,7 @@ void Atpg::identifyGateUniquePath()
 // **************************************************************************
 void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternProcessor *pPatternProcessor, int &numOfAtpgUntestableFaults)
 {
-	const Fault &fTDF = *faultPtrListForGen.front();
+	Fault fTDF = *faultPtrListForGen.front();
 
 	// initialize anyway because we need to pass by reference
 	Pattern pattern(pCircuit_);
@@ -1618,14 +1618,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			faultActivationValue = H;
 		}
 	}
-	// for (int i = 0; i < pCircuit_->numPI_ - 1; ++i)
-	// {
-	// 	if (this->pCircuit_->circuitGates_[i + 1].atpgVal_ != X && this->pCircuit_->circuitGates_[i + 1].atpgVal_ != atpgForV1.pCircuit_->circuitGates_[i].atpgVal_)
-	// 	{
-	// 		std::cerr << "[DEBUG] contradiction with PI1 and PI2\n";
-	// 		exit(0);
-	// 	}
-	// }
 	atpgForV1.initializeObjectivesAndFrontiers();
 	for (Gate &gate : atpgForV1.pCircuit_->circuitGates_)
 	{
@@ -1849,7 +1841,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				// scan each HEADLINE
 				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
-					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]];
+					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[atpgForV1.headLineGateIDs_[i]];
 					if (!pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X)
 					{
 						atpgForV1.fanoutFreeBacktrace(pGate);
@@ -3098,12 +3090,12 @@ void Atpg::findFinalObjective_for_V1(BACKTRACE_STATUS &backtraceFlag, const bool
 			{
 				initialObjectives_ = unjustifiedGateIDs_;
 			}
-			if (gateID_to_valModified_[currentTargetFault_.gateID_] == 0)
-			{
-				// theoretically does not need to propagate fault
-				// no dfrontiers needed
-				initialObjectives_.push_back(currentTargetFault_.gateID_);
-			}
+			// if (gateID_to_valModified_[currentTargetFault_.gateID_] == 0)
+			// {
+			// theoretically does not need to propagate fault
+			// no dfrontiers needed
+			initialObjectives_.push_back(currentTargetFault_.gateID_);
+			// }
 			result = multipleBacktrace(INITIAL, finalObjectiveId);
 			if (result == CONTRADICTORY)
 			{
