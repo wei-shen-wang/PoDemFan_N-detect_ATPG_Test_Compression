@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 				std::cout << ' ';
 				if (fanMgr.pcoll->patternVector_[i].PI2_[0] == L)
 					std::cout << '0';
-				else if (fanMgr.pcoll->patternVector_[i].PI1_[0] == H)
+				else if (fanMgr.pcoll->patternVector_[i].PI2_[0] == H)
 					std::cout << '1';
 				else
 					std::cout << 'X';
