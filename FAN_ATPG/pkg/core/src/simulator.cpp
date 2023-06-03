@@ -134,6 +134,34 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 		// Check V2 detection and drop faults
 		assignV2PatternToCircuitInputs(pattern);
 		parallelFaultFaultSim(remainingFaults);
+		// for (int i = 0; i < pCircuit_->numPI_; ++i)
+		// {
+		// 	pCircuit_->circuitGates_[i].goodSimHigh_ = PARA_L;
+		// 	pCircuit_->circuitGates_[i].goodSimLow_ = PARA_L;
+		// }
+
+		// for (int i = 0; i < pCircuit_->numPI_; ++i)
+		// {
+		// 	if (pattern.PI1_[i] == H)
+		// 	{
+		// 		pCircuit_->circuitGates_[i].goodSimHigh_ = PARA_H;
+		// 	}
+		// 	if (pattern.PI1_[i] == L)
+		// 	{
+		// 		pCircuit_->circuitGates_[i].goodSimLow_ = PARA_H;
+		// 	}
+		// }
+
+		// for (int i = 0; i < pCircuit_->numGate_; ++i)
+		// {
+		// 	if (i < pCircuit_->numPI_)
+		// 	{
+		// 		processed_[];
+		// 	}
+		// 	else
+		// 	{
+		// 	}
+		// }
 	}
 	// std::cerr << "Remain " << remainingFaults.size() << " fault(s)\n";
 }
@@ -155,8 +183,10 @@ void Simulator::CheckTDFV1Activation(FaultPtrList &remainingFaults)
 		{
 			case Fault::STR:
 				pfault->V1activated_ = (faultyGateGoodSimLow != PARA_L);
+				break;
 			case Fault::STF:
 				pfault->V1activated_ = (faultyGateGoodSimHigh != PARA_L);
+				break;
 			default:
 				break;
 		}

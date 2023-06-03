@@ -114,7 +114,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 			// => the fault is neither aborted nor untestable => a pattern was found => detected fault
 			if (pCurrentFault == newOrderFaultPtrList.front())
 			{
-				newOrderFaultPtrList.front()->faultState_ = Fault::DT;
+				// newOrderFaultPtrList.front()->faultState_ = Fault::DT;
 				newOrderFaultPtrList.pop_front();
 				continue;
 			}
@@ -538,17 +538,6 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		resetPrevAtpgValStored();
 		clearAllFaultEffectByEvaluation();
 		storeCurrentAtpgVal();
-		// std::cerr << "Pattern: PI1: ";
-		// for (int i = 0; i < pattern.PI1_.size(); i++)
-		// {
-		// printValue(pattern.PI1_[i], std::cerr);
-		// }
-		// std::cerr << " PI2:";
-		// for (int i = 0; i < pattern.PI2_.size(); i++)
-		// {
-		// printValue(pattern.PI2_[i], std::cerr);
-		// }
-		// std::cerr << '\n';
 		pPatternProcessor->patternVector_.push_back(pattern);
 		// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
 
@@ -1505,7 +1494,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	// Gate *pFaultyLine = NULL;							// the gate pointer, whose fanOut is the target fault
 	IMPLICATION_STATUS implicationStatus; // decide implication to go forward or backward
 	BACKTRACE_STATUS backtraceFlag;				// backtrace flag including { INITIAL, CHECK_AND_SELECT, CURRENT_OBJ_DETERMINE, FAN_OBJ_DETERMINE }
-	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FAIL;
+	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FOUND;
 
 	// the reinitialized circuit still holds the atpgVal_ of the original Atpg
 	Circuit reinitializedCircuit = *(this->pCircuit_);
@@ -1537,8 +1526,10 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 					break;
 				case D:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
+					break;
 				case B:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = L;
+					break;
 				default:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
@@ -1798,7 +1789,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			if (numOfBacktrack > BACKTRACK_LIMIT)
 			{
 				return TDF_V1_FAIL;
-				Finish = true;
+				// Finish = true;
 			}
 
 			atpgForV1.clearAllEvents();
@@ -1811,8 +1802,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			}
 			else
 			{
-				genStatus = TDF_V1_FAIL;
-				Finish = true;
+				return TDF_V1_FAIL;
+				// Finish = true;
 			}
 			continue;
 		}
@@ -1850,7 +1841,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
 					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]];
-					if (!pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X)
+					if (!(pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X))
 					{
 						atpgForV1.fanoutFreeBacktrace(pGate);
 					}
@@ -1859,8 +1850,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				{
 					pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 				}
-				genStatus = TDF_V1_FOUND;
-				Finish = true;
+				return TDF_V1_FOUND;
+				// Finish = true;
 			}
 		}
 		else
@@ -1873,8 +1864,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
 			if (numOfBacktrack > BACKTRACK_LIMIT)
 			{
-				genStatus = TDF_V1_FAIL;
-				Finish = true;
+				return TDF_V1_FAIL;
+				// Finish = true;
 			}
 
 			atpgForV1.clearAllEvents();
@@ -1892,8 +1883,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			{
 				// backtrack fail
 				// EXIT: TDF_V1_FAIL
-				genStatus = TDF_V1_FAIL;
-				Finish = true;
+				return TDF_V1_FAIL;
+				// Finish = true;
 			}
 		}
 	}
