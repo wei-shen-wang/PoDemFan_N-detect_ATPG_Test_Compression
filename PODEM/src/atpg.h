@@ -262,6 +262,7 @@ private:
 	void shift();
 	void undo_shift();
 	void tdf_podemx();
+	void tdf_podemx_bt(); // backtrace from unknown PO to select sec. fault
 	int tdf_podemx_secondary(fptr);
 
 	/* declared in display.cpp */
@@ -289,7 +290,7 @@ private:
 		int wire_value2;		/* (32 bits) represents values of this wire
 													 in the presence of 16 faults. (for pfedfs) */
 		int wlist_index;		/* index into the sorted_wlist array */
-
+		forward_list<fptr> udflist; // for podemx_bt()
 		//  the following functions control/observe the state of wire
 		//  HCY 2020/2/6
 		void set_(int type) { flag |= type; }

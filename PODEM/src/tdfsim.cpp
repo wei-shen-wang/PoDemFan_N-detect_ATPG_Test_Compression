@@ -81,7 +81,7 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 	int i, start_wire_index, nckt;
 	int num_of_fault;
 	bool redundant = true;
-	
+
 	num_of_fault = 0; // counts the number of faults in a packet
 
 	/* num_of_current_detect is used to keep track of the number of undetected
@@ -367,6 +367,7 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 					else
 						cout << "fault "<<  fptr_ele->fault_no<< ": STF at wire- "<< sort_wlist[fptr_ele->to_swlist]->name<< ", "<< IO<< " of "<< fptr_ele->node->name <<endl;*/
 					num_of_current_detect += fptr_ele->eqv_fault_num;
+					sort_wlist[fptr_ele->to_swlist]->udflist.remove(fptr_ele);
 					return true;
 				}
 				else
@@ -424,6 +425,10 @@ void ATPG::generate_tdfault_list()
 		num_of_gate_fault += f->eqv_fault_num; // accumulate total fault count
 		flist_undetect.push_front(f.get());		 // initial undetected fault list contains all faults
 		flist.push_front(move(f));						 // push into the fault list
+		if (flist_type == 3)
+		{
+			sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
+		}
 
 		/* for each gate, create a gate output stuck-at one (SA1) fault */
 		f = move(fptr_s(new (nothrow) FAULT));
@@ -460,6 +465,10 @@ void ATPG::generate_tdfault_list()
 		num_of_gate_fault += f->eqv_fault_num;
 		flist_undetect.push_front(f.get());
 		flist.push_front(move(f));
+		if (flist_type == 3)
+		{
+			sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
+		}
 		/*if w has multiple fanout branches */
 		if (w->onode.size() > 1)
 		{
@@ -494,6 +503,10 @@ void ATPG::generate_tdfault_list()
 						num_of_gate_fault++;
 						flist_undetect.push_front(f.get());
 						flist.push_front(move(f));
+						if (flist_type == 3)
+						{
+							sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
+						}
 						break;
 				}
 				/* create SA1 for AND NAND EQV XOR gate inputs  */
@@ -523,6 +536,10 @@ void ATPG::generate_tdfault_list()
 						num_of_gate_fault++;
 						flist_undetect.push_front(f.get());
 						flist.push_front(move(f));
+						if (flist_type == 3)
+						{
+							sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
+						}
 						break;
 				}
 			}
@@ -544,7 +561,8 @@ void ATPG::generate_tdfault_list()
 	// fprintf(stdout,"#number of equivalent faults = %d\n", fault_num);
 } /* end of generate_fault_list */
 
-void ATPG::reverse_order_fault_sim(){
+void ATPG::reverse_order_fault_sim()
+{
 	flist_undetect.clear();
 	for (auto &f : flist)
 	{
@@ -556,7 +574,8 @@ void ATPG::reverse_order_fault_sim(){
 	for (int i = vectors.size() - 1; i >= 0; i--)
 	{
 		bool redundant = tdfault_sim_a_vector(vectors[i], current_detect_num);
-		if(redundant){
+		if (redundant)
+		{
 			vectors.erase(vectors.begin() + i);
 		}
 	}

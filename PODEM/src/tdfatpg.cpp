@@ -352,7 +352,14 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 	{
 		if (dynamic_test_compression)
 		{
-			tdf_podemx();
+			if (flist_type == 3)
+			{
+				tdf_podemx_bt();
+			}
+			else
+			{
+				tdf_podemx();
+			}
 		}
 
 		for (i = 0; i < ncktin; i++)
@@ -505,7 +512,7 @@ void ATPG::undo_shift()
 
 void ATPG::tdf_podemx()
 {
-	double start_t = ((double)clock());
+	// double start_t = ((double)clock());
 	// cerr << "start PODEMX\n";
 	int U_PO_idx = 0;
 	// vector<fptr> flist_sec;
@@ -544,8 +551,8 @@ void ATPG::tdf_podemx()
 			}
 			break;
 		case 3:
-			// extract fault list inside while loop!
-			break;
+			cerr << "should call tdf_podemx_bt()\n";
+			return;
 	}
 
 	int continuous_fail_count = 0;
@@ -566,12 +573,6 @@ void ATPG::tdf_podemx()
 			return;
 		}
 		fptr f_secondary = nullptr;
-
-		// backtrace from unknown PO!
-		wptr unknown_PO = cktout[U_PO_idx];
-		queue<wptr> q_wire;
-		queue<fptr> q_fault;
-
 		switch (flist_type)
 		{
 			case 1:
@@ -591,9 +592,8 @@ void ATPG::tdf_podemx()
 				flist_sec_s.pop();
 				break;
 			case 3:
-				// TODO
-				q_wire.push(unknown_PO);
-				break;
+				cerr << "should call tdf_podemx_bt()\n";
+				return;
 		}
 
 		for (int i = 0; i < ncktin; i++)
@@ -645,10 +645,6 @@ void ATPG::tdf_podemx()
 			sort_wlist[i]->value = U;
 
 		sim();
-
-		// step 3. generate a test cube for f2 based on t1
-		// do podemx
-
 		switch (tdf_podemx_secondary(f_secondary))
 		{
 			case TRUE:
@@ -661,6 +657,151 @@ void ATPG::tdf_podemx()
 				break;
 		}
 		// f_secondary->tried_dtc = true;
+	}
+}
+
+void ATPG::tdf_podemx_bt()
+{
+	if (flist_type != 3)
+	{
+		cerr << "should call tdf_podemx()\n";
+		return;
+	}
+	double start_t = ((double)clock());
+	// cerr << "start PODEMX\n";
+	int U_PO_idx = 0;
+	for (fptr fptr_ele : flist_undetect)
+	{
+		fptr_ele->tried_dtc = false;
+	}
+
+	int continuous_fail_count = 0;
+	while (continuous_fail_count < fail_continuous_limit)
+	{
+		// terminating condition: 1. no unknown PO,
+		// 2. check unknown PO still exist
+		// cerr << "continuous_fail_count: " << continuous_fail_count << endl;
+		while (U_PO_idx < cktout.size())
+		{
+			if (cktout[U_PO_idx]->value == U)
+			{
+				break;
+			}
+			U_PO_idx++;
+		}
+		if (U_PO_idx == cktout.size())
+		{
+			return;
+		}
+		// cerr << "	PO_idx: " << U_PO_idx << endl;
+		fptr f_secondary = nullptr;
+
+		// backtrace from unknown PO!
+		wptr unknown_PO = cktout[U_PO_idx];
+		queue<wptr> q_wire;
+		queue<fptr> q_fault;
+		bool PO_filled = false;
+
+		q_wire.push(unknown_PO);
+		while (!PO_filled)
+		{
+			while (q_fault.empty())
+			{
+				// get fault
+				if (q_wire.empty())
+				{
+					break;
+				}
+				for (wptr w : q_wire.front()->inode.front()->iwire)
+				{
+					if (w->value == U)
+					{
+						q_wire.push(w);
+					}
+				}
+				for (fptr f : q_wire.front()->udflist)
+				{
+					if (f->detect != REDUNDANT && f->tried_dtc != true)
+					{
+						q_fault.push(f);
+					}
+				}
+				q_wire.pop();
+			}
+			if (q_fault.empty())
+			{
+				break; // try next unknown PO
+			}
+			f_secondary = q_fault.front();
+			q_fault.pop();
+
+			for (int i = 0; i < ncktin; i++)
+			{
+				switch (cktin[i]->value)
+				{
+					case 0:
+					case 1:
+					case U:
+						break;
+					case D:
+						cktin[i]->value = 1;
+						break;
+					case D_bar:
+						cktin[i]->value = 0;
+						break;
+				}
+			}
+			switch (last_bit)
+			{
+				case 0:
+				case 1:
+				case U:
+					break;
+				case D:
+					last_bit = 1;
+					break;
+				case D_bar:
+					last_bit = 0;
+					break;
+			}
+			switch (new_bit)
+			{
+				case 0:
+				case 1:
+				case U:
+					break;
+				case D:
+					new_bit = 1;
+					break;
+				case D_bar:
+					new_bit = 0;
+					break;
+			}
+
+			for (int i = 0; i < ncktin; ++i)
+				sort_wlist[i]->set_changed();
+			for (int i = ncktin; i < ncktwire; ++i)
+				sort_wlist[i]->value = U;
+
+			sim();
+			// cerr << "podemx_sec\n";
+			switch (tdf_podemx_secondary(f_secondary))
+			{
+				case TRUE:
+					// cerr << "	success\n";
+					PO_filled = (unknown_PO->value != U);
+					break;
+				default:
+					// cerr << "	qq\n";
+					break;
+			}
+			f_secondary->tried_dtc = true;
+		}
+		if (unknown_PO->value == U)
+		{
+			U_PO_idx++;
+			continuous_fail_count++;
+		}
 	}
 }
 
