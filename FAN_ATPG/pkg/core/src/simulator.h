@@ -44,11 +44,12 @@ namespace CoreNs
 		void parallelPatternGoodSimWithAllPattern(PatternProcessor *pPatternCollector);
 		void parallelPatternFaultSimWithAllPattern(PatternProcessor *pPatternCollector, FaultListExtract *pFaultListExtract);
 		void parallelPatternFaultSim(FaultPtrList &remainingFaults);
+		void parallelFaultReset();
 
 		Circuit *pCircuit_;										// The circuit use in simulator.
+		int numDetection_;										// For n-detect.
 	private:
 		// Used by both parallel fault and parallel pattern simulation.
-		int numDetection_;										// For n-detect.
 		int numRecover_;											// Number of recovers needed.
 		std::vector<std::stack<int>> events_; // The event stacks for every circuit levels.
 		std::vector<int> processed_;					// Array of processed flags. 1 means this gate is processed.
@@ -68,7 +69,6 @@ namespace CoreNs
 
 		// Functions for parallel fault simulator.
 		void CheckTDFV1Activation(FaultPtrList &remainingFaults);
-		void parallelFaultReset();
 		bool parallelFaultCheckActivationOf_SAF_or_TDF_v2(const Fault *const pfault);
 		void parallelFaultFaultInjection(const Fault *const pfault, const size_t &injectFaultIndex);
 		void parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrList &remainingFaults);

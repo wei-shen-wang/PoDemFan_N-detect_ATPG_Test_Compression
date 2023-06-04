@@ -527,7 +527,7 @@ void Atpg::identifyGateUniquePath()
 // **************************************************************************
 void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternProcessor *pPatternProcessor, int &numOfAtpgUntestableFaults)
 {
-	const Fault &fTDF = *faultPtrListForGen.front();
+	Fault fTDF = *faultPtrListForGen.front();
 
 	// initialize anyway because we need to pass by reference
 	Pattern pattern(pCircuit_);
@@ -545,6 +545,32 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		{
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
+		pSimulator_->parallelFaultReset();
+		pSimulator_->assignV1PatternToCircuitInputs(pattern);
+		pSimulator_->goodSimCopyGoodToFault(); // Run good simulation first.
+		const int &faultyGate = fTDF.faultyLine_ == 0 ? fTDF.gateID_ : pCircuit_->circuitGates_[fTDF.gateID_].faninVector_[fTDF.faultyLine_ - 1];
+		const ParallelValue &faultyGateGoodSimLow = pCircuit_->circuitGates_[faultyGate].goodSimLow_;
+		const ParallelValue &faultyGateGoodSimHigh = pCircuit_->circuitGates_[faultyGate].goodSimHigh_;
+		static int i = 0;
+		i++;
+		switch (fTDF.faultType_)
+		{
+			case Fault::STR:
+				if (faultyGateGoodSimLow == PARA_L)
+				{
+					std::cerr << i << " error faultyGateGoodSimLow != PARA_L\n";
+				}
+				break;
+			case Fault::STF:
+				if (faultyGateGoodSimHigh == PARA_L)
+				{
+					std::cerr << i << " error faultyGateGoodSimHigh != PARA_L\n";
+				}
+				break;
+			default:
+				break;
+		}
+		pSimulator_->parallelFaultReset();
 
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 		pSimulator_->goodSim();
