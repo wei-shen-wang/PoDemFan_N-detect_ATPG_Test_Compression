@@ -1494,7 +1494,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	// Gate *pFaultyLine = NULL;							// the gate pointer, whose fanOut is the target fault
 	IMPLICATION_STATUS implicationStatus; // decide implication to go forward or backward
 	BACKTRACE_STATUS backtraceFlag;				// backtrace flag including { INITIAL, CHECK_AND_SELECT, CURRENT_OBJ_DETERMINE, FAN_OBJ_DETERMINE }
-	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FOUND;
+	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FAIL;
 
 	// the reinitialized circuit still holds the atpgVal_ of the original Atpg
 	Circuit reinitializedCircuit = *(this->pCircuit_);
@@ -1526,10 +1526,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 					break;
 				case D:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
-					break;
 				case B:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = L;
-					break;
 				default:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
@@ -1789,7 +1787,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			if (numOfBacktrack > BACKTRACK_LIMIT)
 			{
 				return TDF_V1_FAIL;
-				// Finish = true;
+				Finish = true;
 			}
 
 			atpgForV1.clearAllEvents();
@@ -1802,8 +1800,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			}
 			else
 			{
-				return TDF_V1_FAIL;
-				// Finish = true;
+				genStatus = TDF_V1_FAIL;
+				Finish = true;
 			}
 			continue;
 		}
@@ -1841,7 +1839,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
 					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]];
-					if (!(pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X))
+					if (!pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X)
 					{
 						atpgForV1.fanoutFreeBacktrace(pGate);
 					}
@@ -1850,8 +1848,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 				{
 					pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 				}
-				return TDF_V1_FOUND;
-				// Finish = true;
+				genStatus = TDF_V1_FOUND;
+				Finish = true;
 			}
 		}
 		else
@@ -1864,8 +1862,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			// Abort if numOfBacktrack reaching the BACKTRACK_LIMIT
 			if (numOfBacktrack > BACKTRACK_LIMIT)
 			{
-				return TDF_V1_FAIL;
-				// Finish = true;
+				genStatus = TDF_V1_FAIL;
+				Finish = true;
 			}
 
 			atpgForV1.clearAllEvents();
@@ -1883,8 +1881,8 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			{
 				// backtrack fail
 				// EXIT: TDF_V1_FAIL
-				return TDF_V1_FAIL;
-				// Finish = true;
+				genStatus = TDF_V1_FAIL;
+				Finish = true;
 			}
 		}
 	}
