@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 					"read_pattern " + patternFile,
 					"set_fault_type tdf",
 					"add_fault --all",
-					"run_fault_sim -m pf",
+					"run_fault_sim -m pf -n " + std::to_string(ndet),
 					"report_fault -s ud",
 					"report_statistics"};
 		}
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 					"report_pattern",
 					"set_fault_type saf",
 					"add_fault --all",
-					"run_fault_sim -m",
+					"run_fault_sim -m pf -n " + std::to_string(ndet),
 					"report_statistics"};
 		}
 	}

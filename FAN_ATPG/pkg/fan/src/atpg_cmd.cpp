@@ -1209,6 +1209,10 @@ RunFaultSimCmd::RunFaultSimCmd(const std::string &name, FanMgr *fanMgr) : Cmd(na
 	opt->addFlag("m");
 	opt->addFlag("method");
 	optMgr_.regOpt(opt);
+	opt = new Opt(Opt::STR_REQ, "num of detections", "NUM");
+	opt->addFlag("n");
+	opt->addFlag("ndet");
+	optMgr_.regOpt(opt);
 }
 RunFaultSimCmd::~RunFaultSimCmd() {}
 
@@ -1240,9 +1244,15 @@ bool RunFaultSimCmd::exec(const std::vector<std::string> &argv)
 		return false;
 	}
 
+	int ndet = 1;
+	if (optMgr_.isFlagSet("ndet"))
+	{
+		ndet = atoi(optMgr_.getFlagVar("ndet").c_str());
+	}
 	if (!fanMgr_->sim)
 	{
 		fanMgr_->sim = new Simulator(fanMgr_->cir);
+		fanMgr_->sim->setNumDetection(ndet);
 	}
 
 	std::cout << "#  Performing fault simulation ...\n";
