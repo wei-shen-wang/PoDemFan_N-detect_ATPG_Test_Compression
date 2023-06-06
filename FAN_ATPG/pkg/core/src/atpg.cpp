@@ -102,6 +102,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 		pPatternProcessor->patternVector_.reserve(MAX_LIST_SIZE);
 
 		// start ATPG
+		int times;
 		while (!newOrderFaultPtrList.empty())
 		{
 			// meaning the newOrderFaultPtrList is already left with aborted fault
@@ -109,18 +110,36 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 			{
 				break;
 			}
-
 			// the fault is not popped in previous call of StuckAtFaultATPG()
 			// => the fault is neither aborted nor untestable => a pattern was found => detected fault
 			if (pCurrentFault == newOrderFaultPtrList.front())
 			{
-				newOrderFaultPtrList.front()->detection_++;
-				if (newOrderFaultPtrList.front()->detection_ >= pSimulator_->numDetection_)
+				times++;
+				std::cerr << times << "\n";
+				// newOrderFaultPtrList.push_back(newOrderFaultPtrList.front());
+				if (times > 16)
 				{
-					newOrderFaultPtrList.front()->faultState_ = Fault::DT;
+					times = 0;
 					newOrderFaultPtrList.pop_front();
+					// break;
 				}
-				continue;
+				// std::cerr << pCurrentFault->gateID_ << "\n";
+				// std::cerr << pCircuit_->circuitGates_[pCurrentFault->gateID_].gateType_ << "\n";
+				// std::cerr << pCircuit_->circuitGates_[pCurrentFault->gateID_].numFI_ << "\n";
+				// newOrderFaultPtrList.front()->detection_++;
+				// if (newOrderFaultPtrList.front()->detection_ >= pSimulator_->numDetection_)
+				// {
+				// 	newOrderFaultPtrList.front()->faultState_ = Fault::DT;
+				// 	newOrderFaultPtrList.pop_front();
+				// }
+				// if (newOrderFaultPtrList.empty())
+				// {
+				// 	break;
+				// }
+			}
+			else
+			{
+				times = 0;
 			}
 
 			pCurrentFault = newOrderFaultPtrList.front();
@@ -162,6 +181,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 	}
 	// assign the patternset to the best one at last
 	pPatternProcessor->patternVector_ = bestTestPatternSet;
+	// this->XFill(pPatternProcessor);
 }
 
 // **************************************************************************
@@ -550,29 +570,29 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		{
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
-		pSimulator_->parallelFaultReset();
-		pSimulator_->assignV1PatternToCircuitInputs(pattern);
-		pSimulator_->goodSimCopyGoodToFault(); // Run good simulation first.
-		const int &faultyGate = fTDF.faultyLine_ == 0 ? fTDF.gateID_ : pCircuit_->circuitGates_[fTDF.gateID_].faninVector_[fTDF.faultyLine_ - 1];
-		const ParallelValue &faultyGateGoodSimLow = pCircuit_->circuitGates_[faultyGate].goodSimLow_;
-		const ParallelValue &faultyGateGoodSimHigh = pCircuit_->circuitGates_[faultyGate].goodSimHigh_;
-		switch (fTDF.faultType_)
-		{
-			case Fault::STR:
-				if (faultyGateGoodSimLow == PARA_L)
-				{
-					std::cerr << fault_NO << " error faultyGateGoodSimLow != PARA_L\n";
-				}
-				break;
-			case Fault::STF:
-				if (faultyGateGoodSimHigh == PARA_L)
-				{
-					std::cerr << fault_NO << " error faultyGateGoodSimHigh != PARA_L\n";
-				}
-				break;
-			default:
-				break;
-		}
+		// pSimulator_->parallelFaultReset();
+		// pSimulator_->assignV1PatternToCircuitInputs(pattern);
+		// pSimulator_->goodSimCopyGoodToFault(); // Run good simulation first.
+		// const int &faultyGate = fTDF.faultyLine_ == 0 ? fTDF.gateID_ : pCircuit_->circuitGates_[fTDF.gateID_].faninVector_[fTDF.faultyLine_ - 1];
+		// const ParallelValue &faultyGateGoodSimLow = pCircuit_->circuitGates_[faultyGate].goodSimLow_;
+		// const ParallelValue &faultyGateGoodSimHigh = pCircuit_->circuitGates_[faultyGate].goodSimHigh_;
+		// switch (fTDF.faultType_)
+		// {
+		// 	case Fault::STR:
+		// 		if (faultyGateGoodSimLow == PARA_L)
+		// 		{
+		// 			std::cerr << fault_NO << " error faultyGateGoodSimLow != PARA_L\n";
+		// 		}
+		// 		break;
+		// 	case Fault::STF:
+		// 		if (faultyGateGoodSimHigh == PARA_L)
+		// 		{
+		// 			std::cerr << fault_NO << " error faultyGateGoodSimHigh != PARA_L\n";
+		// 		}
+		// 		break;
+		// 	default:
+		// 		break;
+		// }
 		pSimulator_->parallelFaultReset();
 
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
@@ -588,7 +608,7 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 	else
 	{
 		faultPtrListForGen.front()->faultState_ = Fault::AB;
-		faultPtrListForGen.push_back(faultPtrListForGen.front());
+		// faultPtrListForGen.push_back(faultPtrListForGen.front());
 		faultPtrListForGen.pop_front();
 	}
 }
@@ -1383,7 +1403,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 					}
 					continue;
 				}
-				else if (genStatus = TDF_V1_FOUND)
+				else if (genStatus == TDF_V1_FOUND)
 				{
 					// std::cerr << "Check: PI1: ";
 					// for (int a = 0; a < pattern.PI1_.size(); a++)
@@ -1551,11 +1571,25 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault target
 					break;
 				case B:
 				case H:
+					if (faulty_GateID == i)
+					{
+						if (faultActivationValue != H)
+						{
+							return TDF_V1_FAIL;
+						}
+					}
 					reinitializedCircuit.circuitGates_[i].atpgVal_ = H;
 					gateID2changed[i] = true;
 					break;
 				case D:
 				case L:
+					if (faulty_GateID == i)
+					{
+						if (faultActivationValue != L)
+						{
+							return TDF_V1_FAIL;
+						}
+					}
 					reinitializedCircuit.circuitGates_[i].atpgVal_ = L;
 					gateID2changed[i] = true;
 					break;

@@ -58,165 +58,225 @@ int main(int argc, char **argv)
 	// }
 
 	// For VLSI final
-	std::string inputFile, vectorFile;
+	std::string inputCktFile, patternFile;
 	int i = 1;
 	int ndet = 1;
-	bool useTdfAtpg = false, useCompression = false;
+	bool isTDF = false;
+	bool useCompression = false, useFsim = false;
+	bool remainFormat = false;
 
 	/* parse the input switches & arguments */
-	while (i < argc)
+	// 1st circuit file
+	inputCktFile = argv[i];
+	i++;
+	// 2nd ndet
+	ndet = atoi(argv[i]);
+	i++;
+	// 3rd isTDF
+	isTDF = atoi(argv[i]);
+	i++;
+	// 4th useCompression
+	useCompression = atoi(argv[i]);
+	i++;
+	// 5th useFsim (6th pattern file)
+	useFsim = atoi(argv[i]);
+	if (useFsim)
 	{
-		if (strcmp(argv[i], "-tdfatpg") == 0)
-		{
-			useTdfAtpg = true;
-			i++;
-		}
-		else if (strcmp(argv[i], "-ndet") == 0)
-		{
-			ndet = atoi(argv[i + 1]);
-			i += 2;
-		}
-		else if (strcmp(argv[i], "-compression") == 0)
-		{
-			useCompression = true;
-			i++;
-		}
-		// else if (strcmp(argv[i], "-fsim") == 0)
-		// {
-		// 	vectorFile = string(argv[i + 1]);
-		// 	i += 2;
-		// }
-		// else if (strcmp(argv[i], "-tdfsim") == 0)
-		// {
-		// 	vectorFile = string(argv[i + 1]);
-		// 	i += 2;
-		// }
-		else
-		{
-			inputFile = std::string(argv[i]);
-			i++;
-		}
+		i++;
+		patternFile = argv[i];
 	}
+	i++;
+	// Last remainFormat
+	remainFormat = atoi(argv[i]);
 
 	// Check parse content
-	std::cout << "#  TDF ATPG : " << ((useTdfAtpg) ? "on" : "off") << "\n";
+	std::cout << "#  Mode : " << ((useFsim) ? "fsim" : "atpg") << "\n";
+	std::cout << "#  Fault type : " << ((isTDF) ? "TDF" : "SAF") << "\n";
+	std::cout << "#  Input file name : " << inputCktFile << "\n";
+	std::cout << "#  Pattern file name : " << patternFile << "\n";
 	std::cout << "#  N-det : " << ndet << "\n";
 	std::cout << "#  Test compression : " << ((useCompression) ? "on" : "off") << "\n";
-	std::cout << "#  Input file name : " << inputFile << "\n";
+	std::cout << "#  Pattern format : " << ((remainFormat) ? "FAN" : "PODEM") << "\n";
 
 	// Main function
 	// Determine the content in the script
 	std::vector<std::string> scriptStr;
-	if (useTdfAtpg)
+	if (!useFsim)
 	{
-		// Do TDF ATPG
-		if (useCompression)
+		if (isTDF)
 		{
-			scriptStr = {
-					"read_lib techlib/mod_nangate45.mdt",
-					"read_netlist " + inputFile,
-					"report_netlist",
-					"build_circuit --frame 1",
-					"report_circuit",
-					"set_fault_type tdf",
-					"add_fault --all",
-					"set_static_compression on",
-					"set_dynamic_compression on",
-					"set_X-Fill on",
-					"set_pattern_type LOC",
-					"run_atpg -n " + std::to_string(ndet),
-					"report_statistics"};
+			// Do TDF ATPG
+			if (useCompression)
+			{
+				scriptStr = {
+						"read_lib techlib/mod_nangate45.mdt",
+						"read_netlist " + inputCktFile,
+						"report_netlist",
+						"build_circuit --frame 1",
+						"report_circuit",
+						"set_fault_type tdf",
+						"add_fault --all",
+						"set_static_compression on",
+						"set_dynamic_compression on",
+						"set_X-Fill on",
+						"set_pattern_type LOC",
+						"run_atpg -n " + std::to_string(ndet),
+						"report_statistics"};
+			}
+			else
+			{
+				if (!remainFormat)
+				{
+					scriptStr = {
+							"read_lib techlib/mod_nangate45.mdt",
+							"read_netlist " + inputCktFile,
+							"report_netlist",
+							"build_circuit --frame 1",
+							"report_circuit",
+							"set_fault_type tdf",
+							"add_fault --all",
+							"set_static_compression off",
+							"set_dynamic_compression off",
+							"set_X-Fill on",
+							"set_pattern_type LOC",
+							"run_atpg -n " + std::to_string(ndet),
+							"report_statistics"};
+				}
+				else
+				{
+					// This is used for debugging, TDFATPG, remainFormat on, report fault
+					scriptStr = {
+							"read_lib techlib/mod_nangate45.mdt",
+							"read_netlist " + inputCktFile,
+							"report_netlist",
+							"build_circuit --frame 1",
+							"report_circuit",
+							"set_fault_type tdf",
+							"add_fault --all",
+							"set_static_compression off",
+							"set_dynamic_compression off",
+							"set_X-Fill on",
+							"set_pattern_type LOC",
+							"run_atpg -n " + std::to_string(ndet),
+							"report_statistics",
+							"report_fault -s au",
+							"report_fault -s ab",
+							"write_pattern ./tdf_test.pat"};
+				}
+			}
 		}
 		else
 		{
-			scriptStr = {
-					"read_lib techlib/mod_nangate45.mdt",
-					"read_netlist " + inputFile,
-					"report_netlist",
-					"build_circuit --frame 1",
-					"report_circuit",
-					"set_fault_type tdf",
-					"add_fault --all",
-					"set_static_compression off",
-					"set_dynamic_compression off",
-					"set_X-Fill on",
-					"set_pattern_type LOC",
-					"run_atpg -n " + std::to_string(ndet),
-					"report_statistics"};
+			// Do SAF ATPG
+			if (useCompression)
+			{
+				scriptStr = {
+						"read_lib techlib/mod_nangate45.mdt",
+						"read_netlist " + inputCktFile,
+						"report_netlist",
+						"build_circuit --frame 1",
+						"report_circuit",
+						"set_fault_type saf",
+						"add_fault --all",
+						"set_static_compression on",
+						"set_dynamic_compression on",
+						"set_X-Fill on",
+						"run_atpg -n " + std::to_string(ndet),
+						"report_statistics"};
+			}
+			else
+			{
+				scriptStr = {
+						"read_lib techlib/mod_nangate45.mdt",
+						"read_netlist " + inputCktFile,
+						"report_netlist",
+						"build_circuit --frame 1",
+						"report_circuit",
+						"set_fault_type saf",
+						"add_fault --all",
+						"set_static_compression off",
+						"set_dynamic_compression off",
+						"set_X-Fill on",
+						"run_atpg -n " + std::to_string(ndet),
+						"report_statistics"};
+			}
 		}
 	}
 	else
 	{
-		// Do SAF ATPG
-		if (useCompression)
+		// Now we just use tdfsim to test the generated TDF pattern
+		if (isTDF)
 		{
 			scriptStr = {
 					"read_lib techlib/mod_nangate45.mdt",
-					"read_netlist " + inputFile,
+					"read_netlist " + inputCktFile,
 					"report_netlist",
 					"build_circuit --frame 1",
 					"report_circuit",
-					"set_fault_type saf",
+					"set_pattern_type LOC",
+					"read_pattern " + patternFile,
+					"set_fault_type tdf",
 					"add_fault --all",
-					"set_static_compression on",
-					"set_dynamic_compression on",
-					"set_X-Fill on",
-					"run_atpg -n " + std::to_string(ndet),
+					"run_fault_sim -m pf",
+					"report_fault -s ud",
 					"report_statistics"};
 		}
 		else
 		{
 			scriptStr = {
 					"read_lib techlib/mod_nangate45.mdt",
-					"read_netlist " + inputFile,
+					"read_netlist " + inputCktFile,
 					"report_netlist",
 					"build_circuit --frame 1",
 					"report_circuit",
+					"read_pattern " + patternFile,
+					"report_pattern",
 					"set_fault_type saf",
 					"add_fault --all",
-					"set_static_compression off",
-					"set_dynamic_compression off",
-					"set_X-Fill on",
-					"run_atpg -n " + std::to_string(ndet),
+					"run_fault_sim -m",
 					"report_statistics"};
 		}
 	}
+
 	// Run commands
 	for (i = 0; i < (int)scriptStr.size(); i++)
 	{
 		cmdMgr.exec(scriptStr[i]);
 	}
 	// Write(print) pattern
-	std::cout << "\n";
-	std::cout << "#  Generated Patterns : \n";
-	for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
+	if (!useFsim)
 	{
-		if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
+		std::cout << "\n";
+		std::cout << "#  Generated Patterns : \n";
+		for (int i = 0; i < (int)fanMgr.pcoll->patternVector_.size(); ++i)
 		{
-			std::cout << "T'";
-			for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
+			if (!fanMgr.pcoll->patternVector_[i].PI1_.empty())
 			{
-				if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
-					std::cout << '0';
-				else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
-					std::cout << '1';
-				else
-					std::cout << 'X';
+				std::cout << "T'";
+				for (int j = 0; j < fanMgr.pcoll->numPI_; ++j)
+				{
+					if (fanMgr.pcoll->patternVector_[i].PI1_[j] == L)
+						std::cout << '0';
+					else if (fanMgr.pcoll->patternVector_[i].PI1_[j] == H)
+						std::cout << '1';
+					else
+						std::cout << 'X';
+				}
+				if (!fanMgr.pcoll->patternVector_[i].PI2_.empty())
+				{
+					std::cout << ' ';
+					if (fanMgr.pcoll->patternVector_[i].PI2_[0] == L)
+						std::cout << '0';
+					else if (fanMgr.pcoll->patternVector_[i].PI2_[0] == H)
+						std::cout << '1';
+					else
+						std::cout << 'X';
+				}
 			}
-			if (!fanMgr.pcoll->patternVector_[i].PI2_.empty())
-			{
-				std::cout << ' ';
-				if (fanMgr.pcoll->patternVector_[i].PI2_[0] == L)
-					std::cout << '0';
-				else if (fanMgr.pcoll->patternVector_[i].PI2_[0] == H)
-					std::cout << '1';
-				else
-					std::cout << 'X';
-			}
+			std::cout << "'\n";
 		}
-		std::cout << "'\n";
+		std::cout << "\n";
 	}
-	std::cout << "\n";
 	return 0;
 
 	/*
@@ -235,7 +295,7 @@ int main(int argc, char **argv)
 
 	// goodbye
 	// printGoodbye(tmusg);
-	return 0;
+	// return 0;
 }
 
 void printWelcome()

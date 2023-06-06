@@ -5,17 +5,20 @@
 
 int main(int argc, char *argv[])
 {
-	std::string inputCktFile;
+	std::string inputCktFile, patternFile;
 	int ndet = 1;
-	bool useTdfAtpg = false, useCompression = false;
+	bool isTDF = false;
+	bool useCompression = false, useFsim = false;
+	bool remainFormat = false;
 
 	int i = 1;
 	/* parse the input switches & arguments */
+	// Note that default the program will run the atpg
 	while (i < argc)
 	{
 		if (strcmp(argv[i], "-tdfatpg") == 0)
 		{
-			useTdfAtpg = true;
+			isTDF = true;
 			i++;
 		}
 		else if (strcmp(argv[i], "-ndet") == 0)
@@ -28,16 +31,24 @@ int main(int argc, char *argv[])
 			useCompression = true;
 			i++;
 		}
-		// else if (strcmp(argv[i], "-fsim") == 0)
-		// {
-		// 	vectorFile = string(argv[i + 1]);
-		// 	i += 2;
-		// }
-		// else if (strcmp(argv[i], "-tdfsim") == 0)
-		// {
-		// 	vectorFile = string(argv[i + 1]);
-		// 	i += 2;
-		// }
+		else if (strcmp(argv[i], "-fsim") == 0)
+		{
+			useFsim = true;
+			patternFile = std::string(argv[i + 1]);
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-tdfsim") == 0)
+		{
+			useFsim = true;
+			isTDF = true;
+			patternFile = std::string(argv[i + 1]);
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-rpf") == 0)
+		{
+			remainFormat = true;
+			i++;
+		}
 		else
 		{
 			inputCktFile = std::string(argv[i]);
@@ -49,21 +60,20 @@ int main(int argc, char *argv[])
 	convertCkt2Vlog(inputCktFile, outputVlogFile);
 
 	// Set command for FAN ATPG
-	std::string commandFan = "./bin/opt/fan";
-	if (useTdfAtpg)
-	{
-		commandFan += " -tdfatpg";
-	}
-	if (ndet != 1)
-	{
-		commandFan += " -ndet " + std::to_string(ndet);
-	}
-	if (useCompression)
-	{
-		commandFan += " -compression";
-	}
-	commandFan += " ";
+	std::string commandFan = "./bin/opt/fan ";
+
 	commandFan += outputVlogFile;
+	commandFan += " ";
+	commandFan += std::to_string(ndet);
+	commandFan += ((isTDF) ? " 1" : " 0");
+	commandFan += ((useCompression) ? " 1" : " 0");
+	commandFan += ((useFsim) ? " 1" : " 0");
+	if (useFsim)
+	{
+		commandFan += " ";
+		commandFan += patternFile;
+	}
+	commandFan += ((remainFormat) ? " 1" : " 0");
 
 	// execute the command
 	// std::cout << commandFan << '\n';

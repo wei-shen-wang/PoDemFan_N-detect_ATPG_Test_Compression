@@ -94,8 +94,7 @@ void Simulator::parallelFaultFaultSimWithAllPattern(PatternProcessor *pPatternCo
 		}
 
 		// Assign pattern to circuit PI & PPI for further fault simulation.
-		assignPatternToCircuitInputs(pattern);
-		parallelFaultFaultSim(remainingFaults);
+		parallelFaultFaultSimWithOnePattern(pattern, remainingFaults);
 	}
 }
 
@@ -490,7 +489,6 @@ void Simulator::parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrLi
 	{
 		detected |= ((pCircuit_->circuitGates_[i].goodSimLow_ & pCircuit_->circuitGates_[i].faultSimHigh_) | (pCircuit_->circuitGates_[i].goodSimHigh_ & pCircuit_->circuitGates_[i].faultSimLow_));
 	}
-
 	// Fault drop.
 	for (int i = 0; i < numInjectedFaults_; ++i)
 	{
