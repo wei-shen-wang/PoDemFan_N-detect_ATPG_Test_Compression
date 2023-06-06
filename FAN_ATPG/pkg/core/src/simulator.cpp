@@ -86,7 +86,7 @@ void Simulator::parallelFaultFaultSimWithAllPattern(PatternProcessor *pPatternCo
 	}
 
 	// Simulate all patterns for all faults.
-	for (const Pattern &pattern : pPatternCollector->patternVector_)
+	for (Pattern &pattern : pPatternCollector->patternVector_)
 	{
 		if (remainingFaults.size() == 0)
 		{
@@ -111,7 +111,7 @@ void Simulator::parallelFaultFaultSimWithAllPattern(PatternProcessor *pPatternCo
 //            ]
 // Date       [ Ver. 1.0 started 2013/08/14 last modified 2023/01/06 ]
 // **************************************************************************
-void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, FaultPtrList &remainingFaults)
+void Simulator::parallelFaultFaultSimWithOnePattern(Pattern &pattern, FaultPtrList &remainingFaults)
 {
 	// Assign pattern to circuit PI & PPI for further fault simulation.
 	if (remainingFaults.size() == 0)
@@ -128,6 +128,7 @@ void Simulator::parallelFaultFaultSimWithOnePattern(const Pattern &pattern, Faul
 	{
 		// For TDF
 		// Check V1 activation
+		int originalFaultSize = remainingFaults.size();
 		assignV1PatternToCircuitInputs(pattern);
 		CheckTDFV1Activation(remainingFaults);
 		// Check V2 detection and drop faults
@@ -505,6 +506,10 @@ void Simulator::parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrLi
 		// 	}
 		// 	(*injectedFaults_[i])->V1activated_ = 0;
 		// }
+		if (compression_cand_pat)
+		{
+			compression_cand_pat->useless_ = false;
+		}
 		++((*injectedFaults_[i])->detection_);
 		if ((*injectedFaults_[i])->detection_ >= numDetection_)
 		{

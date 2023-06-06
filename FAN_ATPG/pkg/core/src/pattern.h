@@ -28,6 +28,7 @@ namespace CoreNs
 		std::vector<Value> PO1_;
 		std::vector<Value> PO2_;
 		std::vector<Value> PPO_;
+		bool useless_;
 		inline void initForTransitionDelayFault(Circuit *pCircuit);
 	};
 	inline Pattern::Pattern(Circuit *pCircuit)
