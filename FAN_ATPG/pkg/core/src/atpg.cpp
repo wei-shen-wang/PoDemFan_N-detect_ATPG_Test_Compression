@@ -115,7 +115,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 			if (pCurrentFault == newOrderFaultPtrList.front())
 			{
 				times++;
-				std::cerr << times << "\n";
+				// std::cerr << times << "\n";
 				// newOrderFaultPtrList.push_back(newOrderFaultPtrList.front());
 				if (times > 16)
 				{
@@ -566,7 +566,7 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		pPatternProcessor->patternVector_.push_back(pattern);
 		// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
 
-		if ((pPatternProcessor->staticCompression_ == PatternProcessor::OFF) && (pPatternProcessor->XFill_ == PatternProcessor::ON))
+		if (pPatternProcessor->XFill_ == PatternProcessor::ON)
 		{
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
@@ -2228,7 +2228,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_FAN(Fault targetFa
 				for (int i = 0; i < atpgForV1.numOfheadLines_; ++i)
 				{
 					Gate *pGate = &atpgForV1.pCircuit_->circuitGates_[headLineGateIDs_[i]];
-					if (!pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X)
+					if (!(pGate->gateType_ == Gate::PI || pGate->gateType_ == Gate::PPI || pGate->atpgVal_ == X))
 					{
 						atpgForV1.fanoutFreeBacktrace(pGate);
 					}
@@ -2275,9 +2275,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_FAN(Fault targetFa
 			}
 		}
 	}
-	std::cerr << "It's X ";
-	std::cerr << "and found"
-						<< "\n";
+	std::cerr << "It's X and found\n";
 	return genStatus;
 }
 
@@ -5447,11 +5445,16 @@ void Atpg::staticTestCompressionByReverseFaultSimulation(PatternProcessor *pPatt
 	int leftFaultCount = originalFaultList.size();
 	for (std::vector<Pattern>::reverse_iterator rit = tmp.rbegin(); rit != tmp.rend(); ++rit)
 	{
+		pSimulator_->compression_cand_pat = &(*rit);
+		pSimulator_->compression_cand_pat->useless_ = true;
 		pSimulator_->parallelFaultFaultSimWithOnePattern((*rit), originalFaultList);
+		if (pSimulator_->compression_cand_pat->useless_ == false)
+		{
+			pPatternProcessor->patternVector_.push_back((*rit));
+		}
 		if (leftFaultCount > originalFaultList.size())
 		{
 			leftFaultCount = originalFaultList.size();
-			pPatternProcessor->patternVector_.push_back((*rit));
 		}
 		else if (leftFaultCount < originalFaultList.size())
 		{
