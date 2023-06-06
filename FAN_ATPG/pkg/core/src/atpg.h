@@ -14,6 +14,7 @@
 #include <vector> // added by wang
 #include <stack>	// added by wang
 #include <algorithm>
+#include <cassert>
 #include "decision_tree.h"
 #include "simulator.h"
 
@@ -124,7 +125,8 @@ namespace CoreNs
 
 		SINGLE_PATTERN_GENERATION_STATUS generateSinglePatternOnTargetFault(Fault targetFault, bool isAtStageDTC);
 		SINGLE_PATTERN_GENERATION_STATUS generateSinglePatternOnTargetTDF(Fault targetFault, Pattern &pattern, bool isAtStageDTC);
-		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1(Fault targetFault, Pattern &pattern);
+		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1_by_FAN(Fault targetFault, Pattern &pattern);
+		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1_by_PODEM(Fault targetFault, Pattern &pattern);
 
 		// initialization at the start of single pattern generation
 		Gate *initializeForSinglePatternGeneration(Fault &targetFault, int &BackImpLevel, IMPLICATION_STATUS &implicationStatus, const bool &isAtStageDTC);

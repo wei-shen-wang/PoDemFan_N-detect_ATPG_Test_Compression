@@ -9,7 +9,7 @@
 #include <algorithm>
 
 using namespace CoreNs;
-
+int fault_NO = 0;
 // **************************************************************************
 // Function   [ Atpg::generatePatternSet ]
 // Commenter  [ CAL WWS ]
@@ -114,8 +114,12 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 			// => the fault is neither aborted nor untestable => a pattern was found => detected fault
 			if (pCurrentFault == newOrderFaultPtrList.front())
 			{
-				// newOrderFaultPtrList.front()->faultState_ = Fault::DT;
-				newOrderFaultPtrList.pop_front();
+				newOrderFaultPtrList.front()->detection_++;
+				if (newOrderFaultPtrList.front()->detection_ >= pSimulator_->numDetection_)
+				{
+					newOrderFaultPtrList.front()->faultState_ = Fault::DT;
+					newOrderFaultPtrList.pop_front();
+				}
 				continue;
 			}
 
@@ -123,6 +127,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 			const bool isTransitionDelayFault = (pCurrentFault->faultType_ == Fault::STR || pCurrentFault->faultType_ == Fault::STF);
 			if (isTransitionDelayFault)
 			{
+				fault_NO++;
 				TransitionDelayFaultATPG(newOrderFaultPtrList, pPatternProcessor, numOfAtpgUntestableFaults);
 			}
 			else
@@ -551,20 +556,18 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		const int &faultyGate = fTDF.faultyLine_ == 0 ? fTDF.gateID_ : pCircuit_->circuitGates_[fTDF.gateID_].faninVector_[fTDF.faultyLine_ - 1];
 		const ParallelValue &faultyGateGoodSimLow = pCircuit_->circuitGates_[faultyGate].goodSimLow_;
 		const ParallelValue &faultyGateGoodSimHigh = pCircuit_->circuitGates_[faultyGate].goodSimHigh_;
-		static int i = 0;
-		i++;
 		switch (fTDF.faultType_)
 		{
 			case Fault::STR:
 				if (faultyGateGoodSimLow == PARA_L)
 				{
-					std::cerr << i << " error faultyGateGoodSimLow != PARA_L\n";
+					std::cerr << fault_NO << " error faultyGateGoodSimLow != PARA_L\n";
 				}
 				break;
 			case Fault::STF:
 				if (faultyGateGoodSimHigh == PARA_L)
 				{
-					std::cerr << i << " error faultyGateGoodSimHigh != PARA_L\n";
+					std::cerr << fault_NO << " error faultyGateGoodSimHigh != PARA_L\n";
 				}
 				break;
 			default:
@@ -1341,9 +1344,10 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 				{
 					targetFault_for_V1.gateID_ = pCircuit_->circuitGates_[pCircuit_->circuitGates_[targetFault_for_V1.gateID_].faninVector_[targetFault.faultyLine_ - 1]].gateId_;
 				}
-				genStatus = generateTDFV1(targetFault_for_V1, pattern);
+				genStatus = generateTDFV1_by_PODEM(targetFault_for_V1, pattern);
 				if (genStatus == TDF_V1_FAIL)
 				{
+					// std::cerr << numOfBacktrack << "\n";
 					// backtrack
 					// no frontier can propagate to the PO
 					// record the number of backtrack
@@ -1509,8 +1513,343 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateSinglePatternOnTargetTDF(Fa
 	return genStatus;
 }
 
+Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault targetFault, Pattern &pattern)
+{
+	static int functionCall = 0;
+	++functionCall;
+	// std::cerr << functionCall << " start of function\n";
+	int numOfBacktrack = 0; // backtrack times
+	bool faultHasBeenActivated = false;
+	int faulty_GateID = targetFault.gateID_;
+	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V1_FOUND;
+
+	Circuit reinitializedCircuit = *(this->pCircuit_);
+	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
+	Atpg atpgForV1 = Atpg(&reinitializedCircuit, &reinitializedSimulator);
+	std::vector<bool> gateID2changed(reinitializedCircuit.numGate_, false);
+	std::vector<bool> gateID2scheduled(reinitializedCircuit.numGate_, false);
+	std::vector<bool> gateID2backtracked(reinitializedCircuit.numGate_, false);
+	Gate &atpgForV1_faulty_gate = reinitializedCircuit.circuitGates_[faulty_GateID];
+	Value faultActivationValue;
+	std::stack<int> decisionTree_for_V1;
+	if (targetFault.faultType_ == Fault::STR)
+	{
+		faultActivationValue = L;
+	}
+	else if (targetFault.faultType_ == Fault::STF)
+	{
+		faultActivationValue = H;
+	}
+	for (int i = 0; i < reinitializedCircuit.numGate_; ++i)
+	{
+		if (i < reinitializedCircuit.numPI_ - 1)
+		{
+			switch (this->pCircuit_->circuitGates_[i + 1].atpgVal_)
+			{
+				case X:
+					reinitializedCircuit.circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
+					break;
+				case B:
+				case H:
+					reinitializedCircuit.circuitGates_[i].atpgVal_ = H;
+					gateID2changed[i] = true;
+					break;
+				case D:
+				case L:
+					reinitializedCircuit.circuitGates_[i].atpgVal_ = L;
+					gateID2changed[i] = true;
+					break;
+				default:
+					reinitializedCircuit.circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
+					break;
+			}
+		}
+		else
+		{
+			reinitializedCircuit.circuitGates_[i].atpgVal_ = X;
+		}
+	}
+
+	do
+	{
+		// simluation
+		// std::cerr << numOfBacktrack << "\n";
+		for (int i = 0; i < pCircuit_->numPI_; ++i)
+		{
+			if (gateID2changed[i])
+			{
+				gateID2changed[i] = false;
+				for (int j = 0; j < reinitializedCircuit.circuitGates_[i].numFO_; ++j)
+				{
+					gateID2scheduled[reinitializedCircuit.circuitGates_[i].fanoutVector_[j]] = true;
+				}
+			}
+		}
+
+		for (int i = pCircuit_->numPI_; i < pCircuit_->numGate_; ++i)
+		{
+			if (gateID2scheduled[i])
+			{
+				gateID2scheduled[i] = false;
+				Value originalVal = reinitializedCircuit.circuitGates_[i].atpgVal_;
+				reinitializedCircuit.circuitGates_[i].atpgVal_ = atpgForV1.evaluateGoodVal(reinitializedCircuit.circuitGates_[i]);
+				if (originalVal != reinitializedCircuit.circuitGates_[i].atpgVal_)
+				{
+					for (int j = 0; j < reinitializedCircuit.circuitGates_[i].numFO_; ++j)
+					{
+						gateID2scheduled[reinitializedCircuit.circuitGates_[i].fanoutVector_[j]] = true;
+					}
+				}
+			}
+		}
+
+		// if fault activated, v1 found
+		if (faultActivationValue == atpgForV1_faulty_gate.atpgVal_)
+		{
+			genStatus = TDF_V1_FOUND;
+			break;
+		}
+		// else if value not decided yet assign another PI
+		else if (atpgForV1_faulty_gate.atpgVal_ == X)
+		{
+			// find pi assignment
+			Value piValueToAssign = faultActivationValue;
+			Gate *pObjectGate = &atpgForV1_faulty_gate;
+			Gate *pNextObjectGate = NULL;
+
+			while (pObjectGate->gateId_ >= pCircuit_->numPI_)
+			{
+				// std::cerr << "gate id " << pObjectGate->gateId_ << "\n";
+				// std::cerr << "gate fanin id " << reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[0]].gateId_ << "\n";
+				// exit(0);
+				pNextObjectGate = NULL;
+				// choose object gate index
+				switch (pObjectGate->gateType_)
+				{
+					case Gate::OR2:
+					case Gate::OR3:
+					case Gate::OR4:
+					case Gate::OR5:
+					case Gate::NAND2:
+					case Gate::NAND3:
+					case Gate::NAND4:
+						if (piValueToAssign == H)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->numLevel_ < reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										{
+											pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						else if (piValueToAssign == L)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->numLevel_ > reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										{
+											pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						break;
+					case Gate::NOR2:
+					case Gate::NOR3:
+					case Gate::NOR4:
+					case Gate::AND2:
+					case Gate::AND3:
+					case Gate::AND4:
+					case Gate::AND5:
+					case Gate::AND8:
+					case Gate::AND9:
+						if (piValueToAssign == H)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->numLevel_ > reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										{
+											pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						else if (piValueToAssign == L)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->numLevel_ < reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										{
+											pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						break;
+					case Gate::INV:
+					case Gate::BUF:
+						if (reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[0]].atpgVal_ == X)
+						{
+							pNextObjectGate = &(reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[0]]);
+						}
+						break;
+				}
+
+				switch (pObjectGate->gateType_)
+				{
+					case Gate::INV:
+					case Gate::NOR2:
+					case Gate::NOR3:
+					case Gate::NOR4:
+					case Gate::NAND2:
+					case Gate::NAND3:
+					case Gate::NAND4:
+						if (piValueToAssign == H)
+						{
+							piValueToAssign = L;
+						}
+						else if (piValueToAssign == L)
+						{
+							piValueToAssign = H;
+						}
+						break;
+				}
+				if (pNextObjectGate == NULL)
+				{
+					genStatus = TDF_V1_FAIL;
+					break;
+				}
+				pObjectGate = pNextObjectGate;
+				if (pObjectGate == NULL)
+				{
+					break;
+				}
+			}
+			if (pObjectGate == NULL)
+			{
+				genStatus = TDF_V1_FAIL;
+				break;
+			}
+			else
+			{
+				assert(pObjectGate->gateId_ < reinitializedCircuit.numPI_);
+				assert(piValueToAssign != X);
+				pObjectGate->atpgVal_ = piValueToAssign;
+				gateID2changed[pObjectGate->gateId_] = true;
+				decisionTree_for_V1.push(pObjectGate->gateId_);
+			}
+		}
+		// else backtrack assigned PI
+		else
+		{
+			// std::cerr << "3\n";
+			while (true)
+			{
+				if (numOfBacktrack > BACKTRACK_LIMIT)
+				{
+					genStatus = TDF_V1_FAIL;
+					break;
+				}
+				if (decisionTree_for_V1.empty())
+				{
+					genStatus = TDF_V1_FAIL;
+					break;
+				}
+				int backtrackCandidate = decisionTree_for_V1.top();
+				if (gateID2backtracked[backtrackCandidate] == true)
+				{
+					gateID2backtracked[backtrackCandidate] = false;
+					reinitializedCircuit.circuitGates_[backtrackCandidate].atpgVal_ = X;
+					gateID2changed[backtrackCandidate] = true;
+					decisionTree_for_V1.pop();
+				}
+				else
+				{
+					if (reinitializedCircuit.circuitGates_[backtrackCandidate].atpgVal_ == H)
+					{
+						reinitializedCircuit.circuitGates_[backtrackCandidate].atpgVal_ = L;
+					}
+					else if (reinitializedCircuit.circuitGates_[backtrackCandidate].atpgVal_ == L)
+					{
+						reinitializedCircuit.circuitGates_[backtrackCandidate].atpgVal_ = H;
+					}
+					gateID2changed[backtrackCandidate] = true;
+					gateID2backtracked[backtrackCandidate] = true;
+					++numOfBacktrack;
+				}
+			}
+		}
+		if (genStatus == TDF_V1_FAIL)
+		{
+			break;
+		}
+	} while (true);
+
+	if (genStatus == TDF_V1_FOUND)
+	{
+		for (int i = 0; i < reinitializedCircuit.numPI_; ++i)
+		{
+			pattern.PI1_[i] = reinitializedCircuit.circuitGates_[i].atpgVal_;
+		}
+	}
+	// std::cerr << functionCall << " end of function\n";
+	return genStatus;
+	// do
+	// sim
+	// if faultactivationvalue == faultygatevalue
+	// 	break
+	// else if faultygatevalue == X
+	//  find pi assignment
+	// 	add to decision tree
+	// else
+	// 	if decistion tree empty
+	// 		untestable
+	// 	backtrack
+	// 	if backtrack limit
+	// 		abort
+	// while true
+}
+
 // return v1_found if v1 found, return v1 failed and backtrack v2 if v1 is not found
-Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pattern &pattern)
+Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_FAN(Fault targetFault, Pattern &pattern)
 {
 	int backwardImplicationLevel = 0; // backward imply level
 	int numOfBacktrack = 0;						// backtrack times
@@ -1551,9 +1890,11 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
 				case D:
-					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
-				case B:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = L;
+					break;
+				case B:
+					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = H;
+					break;
 				default:
 					atpgForV1.pCircuit_->circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
@@ -1577,7 +1918,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		}
 		else
 		{
-			std::cerr << "unexpected atpg value in Atpg::generateTDFV1\n";
+			std::cerr << "unexpected atpg value in Atpg::generateTDFV1_by_FAN\n";
 			exit(0);
 		}
 	}
@@ -1586,12 +1927,12 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	{
 		if (targetFault.faultType_ == Fault::STR)
 		{
-			// std::cerr << "It's L";
+			std::cerr << "It's L";
 			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
-			// std::cerr << " and found" << '\n';
+			std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
@@ -1605,12 +1946,12 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	{
 		if (targetFault.faultType_ == Fault::STF)
 		{
-			// std::cerr << "It's H";
+			std::cerr << "It's H";
 			for (int i = 0; i < atpgForV1.pCircuit_->numPI_; ++i)
 			{
 				pattern.PI1_[i] = atpgForV1.pCircuit_->circuitGates_[i].atpgVal_;
 			}
-			// std::cerr << " and found" << '\n';
+			std::cerr << " and found" << '\n';
 			return TDF_V1_FOUND;
 		}
 		else
@@ -1623,7 +1964,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 	Value faultActivationValue;
 	if (atpgForV1_faulty_gate.atpgVal_ == X)
 	{
-		// std::cerr << "It's X" << '\n';
 		if (targetFault.faultType_ == Fault::STR)
 		{
 			faultActivationValue = L;
@@ -1633,14 +1973,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			faultActivationValue = H;
 		}
 	}
-	// for (int i = 0; i < pCircuit_->numPI_ - 1; ++i)
-	// {
-	// 	if (this->pCircuit_->circuitGates_[i + 1].atpgVal_ != X && this->pCircuit_->circuitGates_[i + 1].atpgVal_ != atpgForV1.pCircuit_->circuitGates_[i].atpgVal_)
-	// 	{
-	// 		std::cerr << "[DEBUG] contradiction with PI1 and PI2\n";
-	// 		exit(0);
-	// 	}
-	// }
 	atpgForV1.initializeObjectivesAndFrontiers();
 	for (Gate &gate : atpgForV1.pCircuit_->circuitGates_)
 	{
@@ -1845,10 +2177,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 		{
 			backtraceFlag = INITIAL;
 		}
-		// important note:
-		// no d frontiers anymore for v1
-		// has only one initial objectives
-		// many functions must be rewritten
+
 		faultHasBeenActivated = atpgForV1.checkIfFaultHasBeenActivated_by_V1(faultHasBeenActivated);
 		if (faultHasBeenActivated)
 		{
@@ -1912,6 +2241,9 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1(Fault targetFault, Pa
 			}
 		}
 	}
+	std::cerr << "It's X ";
+	std::cerr << "and found"
+						<< "\n";
 	return genStatus;
 }
 
