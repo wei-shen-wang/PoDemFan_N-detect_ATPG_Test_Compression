@@ -38,7 +38,9 @@ namespace CoreNs
 			FAULT_UNTESTABLE,
 			ABORT,
 			TDF_V1_FAIL,
-			TDF_V1_FOUND
+			TDF_V1_FOUND,
+			TDF_V2_FAIL,
+			TDF_V2_FOUND
 		};
 		enum GATE_LINE_TYPE
 		{
@@ -127,6 +129,8 @@ namespace CoreNs
 		SINGLE_PATTERN_GENERATION_STATUS generateSinglePatternOnTargetTDF(Fault targetFault, Pattern &pattern, bool isAtStageDTC);
 		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1_by_FAN(Fault targetFault, Pattern &pattern);
 		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1_by_PODEM(Fault targetFault, Pattern &pattern);
+		SINGLE_PATTERN_GENERATION_STATUS generateTDFV1_by_PODEM_first(Fault targetFault, Pattern &pattern);
+		SINGLE_PATTERN_GENERATION_STATUS generateTDFV2_by_FAN_second(Fault targetFault, Pattern &pattern, bool isAtStageDTC);
 
 		// initialization at the start of single pattern generation
 		Gate *initializeForSinglePatternGeneration(Fault &targetFault, int &BackImpLevel, IMPLICATION_STATUS &implicationStatus, const bool &isAtStageDTC);
@@ -1096,7 +1100,8 @@ namespace CoreNs
 	// **************************************************************************
 	inline void Atpg::randomFill(Pattern &pattern)
 	{
-		srand(0);
+		static int seed = 0;
+		srand(++seed);
 		for (int i = 0; i < pCircuit_->numPI_; ++i)
 		{
 			if (pattern.PI1_[i] == X)

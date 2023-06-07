@@ -506,9 +506,9 @@ void Simulator::parallelFaultCheckDetectionDropFaultsOf_SAF_or_TDF_v2(FaultPtrLi
 		// 	}
 		// 	(*injectedFaults_[i])->V1activated_ = 0;
 		// }
-		if (compression_cand_pat)
+		if (compression_cand_pat_)
 		{
-			compression_cand_pat->useless_ = false;
+			compression_cand_pat_->useless_ = false;
 		}
 		++((*injectedFaults_[i])->detection_);
 		if ((*injectedFaults_[i])->detection_ >= numDetection_)

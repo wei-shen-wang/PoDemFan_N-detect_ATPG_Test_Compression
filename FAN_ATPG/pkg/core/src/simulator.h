@@ -48,7 +48,7 @@ namespace CoreNs
 
 		Circuit *pCircuit_;										// The circuit use in simulator.
 		int numDetection_;										// For n-detect.
-		Pattern *compression_cand_pat;
+		Pattern *compression_cand_pat_;
 	private:
 		// Used by both parallel fault and parallel pattern simulation.
 		int numRecover_;											// Number of recovers needed.
