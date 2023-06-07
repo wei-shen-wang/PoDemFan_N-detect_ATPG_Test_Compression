@@ -1593,7 +1593,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault target
 				case X:
 					reinitializedCircuit.circuitGates_[i].atpgVal_ = this->pCircuit_->circuitGates_[i + 1].atpgVal_;
 					break;
-				case B:
+				case D:
 				case H:
 					if (faulty_GateID == i)
 					{
@@ -1605,7 +1605,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault target
 					reinitializedCircuit.circuitGates_[i].atpgVal_ = H;
 					gateID2changed[i] = true;
 					break;
-				case D:
+				case B:
 				case L:
 					if (faulty_GateID == i)
 					{
