@@ -1872,6 +1872,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault target
 					gateID2changed[backtrackCandidate] = true;
 					gateID2backtracked[backtrackCandidate] = true;
 					++numOfBacktrack;
+					break;
 				}
 			}
 		}

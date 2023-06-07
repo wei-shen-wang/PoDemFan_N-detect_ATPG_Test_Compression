@@ -1096,7 +1096,8 @@ namespace CoreNs
 	// **************************************************************************
 	inline void Atpg::randomFill(Pattern &pattern)
 	{
-		srand(0);
+		static int seed = 0;
+		srand(++seed);
 		for (int i = 0; i < pCircuit_->numPI_; ++i)
 		{
 			if (pattern.PI1_[i] == X)
