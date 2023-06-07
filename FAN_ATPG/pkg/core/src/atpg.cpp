@@ -565,35 +565,59 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		storeCurrentAtpgVal();
 		pPatternProcessor->patternVector_.push_back(pattern);
 		// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
+		if (pPatternProcessor->dynamicCompression_ == PatternProcessor::ON)
+		{
+			FaultPtrList faultListTemp = faultPtrListForGen;
+			// pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
+			pSimulator_->goodSim();
+			for (Fault *pFault : faultListTemp)
+			{
+				if (pFault->faultState_ == Fault::DT)
+				{
+					continue;
+				}
+				Gate *pGateForActivation = getGateForFaultActivation(*pFault);
+				if (((pGateForActivation->atpgVal_ == L) && (pFault->faultType_ == Fault::STR)) ||
+						((pGateForActivation->atpgVal_ == H) && (pFault->faultType_ == Fault::STF)))
+				{
+					continue;
+				}
 
+				if (pGateForActivation->atpgVal_ != X)
+				{
+					setGateAtpgValAndRunImplication(*(pGateForActivation), X);
+				}
+
+				if (xPathExists(pGateForActivation))
+				{
+					if (generateSinglePatternOnTargetTDF(*pFault, pPatternProcessor->patternVector_.back(), true) == PATTERN_FOUND)
+					{
+						resetPrevAtpgValStored();
+						clearAllFaultEffectByEvaluation();
+						storeCurrentAtpgVal();
+						// writeAtpgValToPatternPI(pPatternProcessor->patternVector_.back());
+					}
+					else
+					{
+						for (Gate &gate : pCircuit_->circuitGates_)
+						{
+							gate.atpgVal_ = gate.prevAtpgValStored_;
+						}
+					}
+				}
+				else
+				{
+					setGateAtpgValAndRunImplication((*pGateForActivation), pGateForActivation->prevAtpgValStored_);
+				}
+			}
+		}
+		clearAllFaultEffectByEvaluation();
+		storeCurrentAtpgVal();
 		if (pPatternProcessor->XFill_ == PatternProcessor::ON)
 		{
 			randomFill(pPatternProcessor->patternVector_.back());
 		}
 		// pSimulator_->parallelFaultReset();
-		// pSimulator_->assignV1PatternToCircuitInputs(pattern);
-		// pSimulator_->goodSimCopyGoodToFault(); // Run good simulation first.
-		// const int &faultyGate = fTDF.faultyLine_ == 0 ? fTDF.gateID_ : pCircuit_->circuitGates_[fTDF.gateID_].faninVector_[fTDF.faultyLine_ - 1];
-		// const ParallelValue &faultyGateGoodSimLow = pCircuit_->circuitGates_[faultyGate].goodSimLow_;
-		// const ParallelValue &faultyGateGoodSimHigh = pCircuit_->circuitGates_[faultyGate].goodSimHigh_;
-		// switch (fTDF.faultType_)
-		// {
-		// 	case Fault::STR:
-		// 		if (faultyGateGoodSimLow == PARA_L)
-		// 		{
-		// 			std::cerr << fault_NO << " error faultyGateGoodSimLow != PARA_L\n";
-		// 		}
-		// 		break;
-		// 	case Fault::STF:
-		// 		if (faultyGateGoodSimHigh == PARA_L)
-		// 		{
-		// 			std::cerr << fault_NO << " error faultyGateGoodSimHigh != PARA_L\n";
-		// 		}
-		// 		break;
-		// 	default:
-		// 		break;
-		// }
-		pSimulator_->parallelFaultReset();
 
 		pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 		pSimulator_->goodSim();
