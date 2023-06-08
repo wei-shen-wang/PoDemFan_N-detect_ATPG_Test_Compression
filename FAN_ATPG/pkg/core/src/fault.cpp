@@ -89,7 +89,7 @@ void FaultListExtract::extractFaultFromCircuit(Circuit *pCircuit)
 		else // Simple Equivalent Fault Collapsing.
 		{
 			std::vector<int> SA0Equivalent(pCircuit->numGate_, 1), SA1Equivalent(pCircuit->numGate_, 1); // Used to count the number of equivalent faults.
-			int SA0EquivalentOfInput, SA1EquivalentOfInput; // SA0Equivalent, SA1Equivalent of the input(fanin) gates.
+			int SA0EquivalentOfInput, SA1EquivalentOfInput;																							 // SA0Equivalent, SA1Equivalent of the input(fanin) gates.
 			for (int i = 0; i < pCircuit->numGate_; ++i)
 			{
 				// Adding input faults.
@@ -251,24 +251,25 @@ void FaultListExtract::extractFaultFromCircuit(Circuit *pCircuit)
 			// But do not extract faults between two time frames.
 			if (pCircuit->circuitGates_[i].numFO_ > 0 && i < pCircuit->numGate_ - pCircuit->numPPI_)
 			{
-				if (pCircuit->circuitGates_[i].gateType_ != Gate::PPI)
-				{
-					uncollapsedFaults_.push_back(Fault(i, Fault::STR, 0));
-					uncollapsedFaults_.push_back(Fault(i, Fault::STF, 0));
-				}
-				else
-				{
-					uncollapsedFaults_.push_back(Fault(i, Fault::STR, 0, 1, Fault::DT));
-					uncollapsedFaults_.push_back(Fault(i, Fault::STF, 0, 1, Fault::DT));
-				}
+				uncollapsedFaults_.push_back(Fault(i, Fault::STR, 0));
+				uncollapsedFaults_.push_back(Fault(i, Fault::STF, 0));
 			}
 			// Extract faults of gate inputs.
-			for (int j = 0; j < pCircuit->circuitGates_[i].numFI_; ++j)
+			if (pCircuit->circuitGates_[i].numFO_ > 1)
 			{
-				if (pCircuit->circuitGates_[pCircuit->circuitGates_[i].faninVector_[j]].numFO_ > 1) // fanout stem
+				for (int j = 0; j < pCircuit->circuitGates_[i].numFO_; ++j)
 				{
-					uncollapsedFaults_.push_back(Fault(i, Fault::STR, j + 1));
-					uncollapsedFaults_.push_back(Fault(i, Fault::STF, j + 1));
+					int fanoutID = pCircuit->circuitGates_[i].fanoutVector_[j];
+					int index;
+					for (int k = 0; k < pCircuit->circuitGates_[fanoutID].faninVector_.size(); ++k)
+					{
+						if (pCircuit->circuitGates_[fanoutID].faninVector_[k] == i)
+						{
+							index = k;
+						}
+					}
+					uncollapsedFaults_.push_back(Fault(fanoutID, Fault::STR, index + 1));
+					uncollapsedFaults_.push_back(Fault(fanoutID, Fault::STF, index + 1));
 				}
 			}
 			// Add faults for PPIs.

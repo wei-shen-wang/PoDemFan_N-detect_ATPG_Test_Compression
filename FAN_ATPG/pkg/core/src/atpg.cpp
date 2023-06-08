@@ -1777,9 +1777,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV2_by_FAN_second(Fault t
 
 Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault targetFault, Pattern &pattern)
 {
-	static int functionCall = 0;
-	++functionCall;
-	// std::cerr << functionCall << " start of function\n";
+	constexpr int PODEM_LIMIT = 50;
 	int numOfBacktrack = 0; // backtrack times
 	bool faultHasBeenActivated = false;
 	int faulty_GateID = targetFault.gateID_;
@@ -2056,10 +2054,9 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault target
 		// else backtrack assigned PI
 		else
 		{
-			// std::cerr << "3\n";
 			while (true)
 			{
-				if (numOfBacktrack > BACKTRACK_LIMIT)
+				if (numOfBacktrack > PODEM_LIMIT)
 				{
 					genStatus = TDF_V1_FAIL;
 					break;
