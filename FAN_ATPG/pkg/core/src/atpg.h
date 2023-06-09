@@ -8,6 +8,7 @@
 #ifndef _CORE_ATPG_H_
 #define _CORE_ATPG_H_
 
+#include <random>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -20,7 +21,8 @@
 
 namespace CoreNs
 {
-	constexpr int BACKTRACK_LIMIT = 500;
+	static int BACKTRACK_LIMIT = 500;
+	static int PODEM_LIMIT = 300;
 	constexpr int INFINITE = 0x7fffffff;
 	constexpr int MAX_LIST_SIZE = 1000;
 	constexpr int NO_UNIQUE_PATH = -1;

@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <list>
+#include <algorithm>
 #include "circuit.h"
 
 namespace CoreNs
@@ -61,6 +62,7 @@ namespace CoreNs
 		Fault();
 		// Fault(const Fault &fault);
 		Fault(int gateID, FAULT_TYPE faultType, int faultyLine, int equivalent = 1, FAULT_STATE faultState = UD);
+		static bool compare_co(const Fault& fault1, const Fault& fault2);
 
 		// int aggr_;            // ID of the aggressor gate.
 		int gateID_;             // ID of the faulty gate.
@@ -71,6 +73,7 @@ namespace CoreNs
 		FAULT_STATE faultState_; // Fault state.
 		int equivalent_;         // The number of equivalent faults, used to calculate uncollapsed fault coverage.
 		int V1activated_; 			 // For VLSI final. This variable is true if the fault is activated by V1 pattern, used in TDF sim.
+		int co_;
 	};
 
 	class FaultListExtract

@@ -11,6 +11,11 @@
 
 using namespace CoreNs;
 
+bool Fault::compare_co(const Fault &fault1, const Fault &fault2)
+{
+	return fault1.co_ > fault2.co_;
+}
+
 // **************************************************************************
 // Function   [ FaultListExtract::extractFaultFromCircuit ]
 // Commenter  [ PYH ]
@@ -293,6 +298,171 @@ void FaultListExtract::extractFaultFromCircuit(Circuit *pCircuit)
 		// Extract faults.
 		extractedFaults_.resize(uncollapsedFaults_.size());
 		extractedFaults_.assign(uncollapsedFaults_.begin(), uncollapsedFaults_.end());
+
+		// calculate cc0 and cc1 starting from PI and PPI
+		std::vector<int> gateID2cc0(pCircuit->totalGate_, 0);
+		std::vector<int> gateID2cc1(pCircuit->totalGate_, 0);
+		std::vector<int> gateID2co(pCircuit->totalGate_, 0);
+		for (int gateID = 0; gateID < pCircuit->totalGate_; ++gateID)
+		{
+			Gate &gate = pCircuit->circuitGates_[gateID];
+			switch (gate.gateType_)
+			{
+				case Gate::PPI:
+				case Gate::PI:
+					gateID2cc0[gateID] = 1;
+					gateID2cc1[gateID] = 1;
+					break;
+				case Gate::PO:
+				case Gate::PPO:
+				case Gate::BUF:
+					gateID2cc0[gateID] = gateID2cc0[gate.faninVector_[0]];
+					gateID2cc1[gateID] = gateID2cc1[gate.faninVector_[0]];
+					break;
+				case Gate::INV:
+					gateID2cc0[gateID] = gateID2cc1[gate.faninVector_[0]] + 1;
+					gateID2cc1[gateID] = gateID2cc0[gate.faninVector_[0]] + 1;
+					break;
+				case Gate::AND2:
+				case Gate::AND3:
+				case Gate::AND4:
+				case Gate::AND5:
+				case Gate::AND8:
+				case Gate::AND9:
+					for (int j = 0; j < gate.numFI_; ++j)
+					{
+						Gate &gateInput = pCircuit->circuitGates_[gate.faninVector_[j]];
+						if (j == 0 || (gateID2cc0[gateInput.gateId_] < gateID2cc0[gateID]))
+						{
+							gateID2cc0[gateID] = gateID2cc0[gateInput.gateId_];
+						}
+						gateID2cc1[gateID] += gateID2cc1[gateInput.gateId_];
+					}
+					++gateID2cc1[gateID];
+					++gateID2cc0[gateID];
+					break;
+				case Gate::NAND2:
+				case Gate::NAND3:
+				case Gate::NAND4:
+					for (int j = 0; j < gate.numFI_; ++j)
+					{
+						Gate &gateInput = pCircuit->circuitGates_[gate.faninVector_[j]];
+						if (j == 0 || (gateID2cc0[gateInput.gateId_] < gateID2cc1[gateID]))
+						{
+							gateID2cc1[gateID] = gateID2cc0[gateInput.gateId_];
+						}
+						gateID2cc0[gateID] += gateID2cc1[gateInput.gateId_];
+					}
+					++gateID2cc0[gateID];
+					++gateID2cc1[gateID];
+					break;
+				case Gate::OR2:
+				case Gate::OR3:
+				case Gate::OR4:
+				case Gate::OR5:
+					for (int j = 0; j < gate.numFI_; ++j)
+					{
+						Gate &gateInput = pCircuit->circuitGates_[gate.faninVector_[j]];
+						if (j == 0 || (gateID2cc1[gateInput.gateId_] < gateID2cc1[gateID]))
+						{
+							gateID2cc1[gateID] = gateID2cc1[gateInput.gateId_];
+						}
+						gateID2cc0[gateID] += gateID2cc0[gateInput.gateId_];
+					}
+					++gateID2cc0[gateID];
+					++gateID2cc1[gateID];
+					break;
+				case Gate::NOR2:
+				case Gate::NOR3:
+				case Gate::NOR4:
+					for (int j = 0; j < gate.numFI_; ++j)
+					{
+						Gate &gateInput = pCircuit->circuitGates_[gate.faninVector_[j]];
+						if (j == 0 || (gateID2cc1[gateInput.gateId_] < gateID2cc0[gateID]))
+						{
+							gateID2cc0[gateID] = gateID2cc1[gateInput.gateId_];
+						}
+						gateID2cc1[gateID] += gateID2cc0[gateInput.gateId_];
+					}
+					++gateID2cc0[gateID];
+					++gateID2cc1[gateID];
+					break;
+				default:
+					std::cerr << "Bug: reach switch case default while calculating cc0_, cc1_";
+					exit(0);
+					break;
+			}
+		}
+
+		// calculate co_ starting from PO and PP
+		for (int gateID = 0; gateID < pCircuit->totalGate_; ++gateID)
+		{
+			Gate &gate = pCircuit->circuitGates_[gateID];
+			switch (gate.gateType_)
+			{
+				case Gate::PO:
+				case Gate::PPO:
+					gateID2co[gateID] = 0;
+					break;
+				case Gate::PPI:
+				case Gate::PI:
+				case Gate::BUF:
+					for (int j = 0; j < gate.numFO_; ++j)
+					{
+						if (j == 0 || gateID2co[gate.fanoutVector_[j]] < gateID2co[gateID])
+						{
+							gateID2co[gateID] = gateID2co[gate.fanoutVector_[j]];
+						}
+					}
+					break;
+				case Gate::INV:
+					gateID2co[gateID] = gateID2co[gate.fanoutVector_[0]] + 1;
+					break;
+				case Gate::AND2:
+				case Gate::AND3:
+				case Gate::AND4:
+				case Gate::AND5:
+				case Gate::AND8:
+				case Gate::AND9:
+				case Gate::NAND2:
+				case Gate::NAND3:
+				case Gate::NAND4:
+					gateID2co[gateID] = gateID2co[gate.fanoutVector_[0]] + 1;
+					for (int j = 0; j < pCircuit->circuitGates_[gate.fanoutVector_[0]].numFI_; ++j)
+					{
+						if (pCircuit->circuitGates_[gate.fanoutVector_[0]].faninVector_[j] != gateID)
+						{
+							gateID2co[gateID] += gateID2cc1[pCircuit->circuitGates_[gate.fanoutVector_[0]].faninVector_[j]];
+						}
+					}
+					break;
+				case Gate::OR2:
+				case Gate::OR3:
+				case Gate::OR4:
+				case Gate::OR5:
+				case Gate::NOR2:
+				case Gate::NOR3:
+				case Gate::NOR4:
+					gateID2co[gateID] = gateID2co[gate.fanoutVector_[0]] + 1;
+					for (int j = 0; j < pCircuit->circuitGates_[gate.fanoutVector_[0]].numFI_; ++j)
+					{
+						if (pCircuit->circuitGates_[gate.fanoutVector_[0]].faninVector_[j] != gateID)
+						{
+							Gate &gateSibling = pCircuit->circuitGates_[pCircuit->circuitGates_[gate.fanoutVector_[0]].faninVector_[j]];
+							gateID2co[gateID] += gateID2cc0[pCircuit->circuitGates_[gate.fanoutVector_[0]].faninVector_[j]];
+						}
+					}
+					break;
+				default:
+					break;
+			}
+		}
+		for (Fault &fault : extractedFaults_)
+		{
+			int faulty_gateID = (fault.faultyLine_ == 0) ? fault.gateID_ : pCircuit->circuitGates_[fault.gateID_].faninVector_[fault.faultyLine_ - 1];
+			fault.co_ = gateID2co[faulty_gateID];
+		}
+		std::sort(extractedFaults_.begin(), extractedFaults_.end(), Fault::compare_co);
 
 		// HYH try to fix the fault number @20141121.
 		for (int i = 0; i < (int)pCircuit->pNetlist_->getTop()->getNPort(); ++i)

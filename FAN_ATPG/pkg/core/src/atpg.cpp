@@ -6,7 +6,6 @@
 // **************************************************************************
 
 #include "atpg.h"
-#include <algorithm>
 
 using namespace CoreNs;
 int fault_NO = 0;
@@ -156,7 +155,29 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 		}
 		if (pPatternProcessor->staticCompression_ == PatternProcessor::ON)
 		{
-			staticTestCompressionByReverseFaultSimulation(pPatternProcessor, newOrderFaultPtrListForSTC);
+			int originalTL;
+			int seed = 0;
+			int retry = 0;
+			do
+			{
+				++seed;
+				FaultPtrList tempNewOrderFaultPtrListForSTC = newOrderFaultPtrListForSTC;
+				originalTL = pPatternProcessor->patternVector_.size();
+				std::shuffle(pPatternProcessor->patternVector_.begin(), pPatternProcessor->patternVector_.end(), std::mt19937{seed});
+				staticTestCompressionByReverseFaultSimulation(pPatternProcessor, tempNewOrderFaultPtrListForSTC);
+				if (originalTL == pPatternProcessor->patternVector_.size())
+				{
+					++retry;
+					if (retry > 5)
+					{
+						break;
+					}
+				}
+				else
+				{
+					retry = 0;
+				}
+			} while (true);
 		}
 
 		// finsh calculation equivalent faults left
@@ -563,10 +584,14 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 		pattern.PI1_[i] = X;
 		pattern.PI2_[i] = X;
 	}
+	PODEM_LIMIT = 300;
+	BACKTRACK_LIMIT = 350;
 	SINGLE_PATTERN_GENERATION_STATUS result = generateTDFV1_by_PODEM_first(fTDF, pattern);
 	// SINGLE_PATTERN_GENERATION_STATUS result = generateSinglePatternOnTargetTDF(fTDF, pattern, false);
 	if (result == PATTERN_FOUND)
 	{
+		PODEM_LIMIT = 50;
+		BACKTRACK_LIMIT = 50;
 		resetPrevAtpgValStored();
 		clearAllFaultEffectByEvaluation();
 		storeCurrentAtpgVal();
@@ -584,7 +609,7 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 				{
 					continue;
 				}
-				if (pFault->detection_ > 0)
+				if (pFault->gateID_ == fTDF.gateID_ && pFault->faultyLine_ == fTDF.faultyLine_)
 				{
 					continue;
 				}
@@ -602,6 +627,7 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 
 				if (xPathExists(pGateForActivation))
 				{
+					// if (generateSinglePatternOnTargetTDF(*pFault, pPatternProcessor->patternVector_.back(), true) == PATTERN_FOUND)
 					if (generateTDFV1_by_PODEM_first(*pFault, pPatternProcessor->patternVector_.back()) == PATTERN_FOUND)
 					{
 						resetPrevAtpgValStored();
@@ -1844,7 +1870,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV2_by_FAN_second(Fault t
 
 Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM(Fault targetFault, Pattern &pattern)
 {
-	constexpr int PODEM_LIMIT = 50;
 	int numOfBacktrack = 0; // backtrack times
 	bool faultHasBeenActivated = false;
 	int faulty_GateID = targetFault.gateID_;
@@ -2194,7 +2219,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 	// static int functionCall = 0;
 	// functionCall++;
 	// std::cerr << functionCall << "\n";
-	constexpr int PODEM_LIMIT = 500;
 	int numOfBacktrack = 0; // backtrack times
 	SINGLE_PATTERN_GENERATION_STATUS genStatus = PATTERN_FOUND;
 	std::vector<bool> gateID2changed(this->pCircuit_->numGate_, false);
@@ -6119,6 +6143,8 @@ Atpg::IMPLICATION_STATUS Atpg::evaluateAndSetFaultyGateAtpgVal(Gate *pGate)
 // **************************************************************************
 void Atpg::staticTestCompressionByReverseFaultSimulation(PatternProcessor *pPatternProcessor, FaultPtrList &originalFaultList)
 {
+	int seed = 0;
+
 	for (Fault *pFault : originalFaultList)
 	{
 		pFault->detection_ = 0;
@@ -6359,27 +6385,6 @@ std::string Atpg::getValStr(Value val)
 // TODO comment by wang
 void Atpg::calSCOAP()
 {
-	// cc0, cc1 and co default is 0, check if is changed before
-	for (int gateID = 0; gateID < pCircuit_->totalGate_; ++gateID)
-	{
-		Gate &gate = pCircuit_->circuitGates_[gateID];
-		if (gate.cc0_ != 0)
-		{
-			std::cerr << "cc0_ is not -1\n";
-			std::cin.get();
-		}
-		if (gate.cc1_ != 0)
-		{
-			std::cerr << "cc1_ is not -1\n";
-			std::cin.get();
-		}
-		if (gate.co_ != 0)
-		{
-			std::cerr << "co_ is not -1\n";
-			std::cin.get();
-		}
-	}
-
 	// calculate cc0 and cc1 starting from PI and PPI
 	for (int gateID = 0; gateID < pCircuit_->totalGate_; ++gateID)
 	{
