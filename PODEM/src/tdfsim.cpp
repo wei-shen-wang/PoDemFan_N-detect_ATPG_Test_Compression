@@ -6,6 +6,8 @@
 /**********************************************************************/
 
 #include "atpg.h"
+#include <numeric>
+#include <random>
 
 /* pack 16 faults into one packet.  simulate 16 faults togeter.
  * the following variable name is somewhat misleading */
@@ -380,7 +382,7 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 
 void ATPG::generate_tdfault_list()
 {
-	int fault_num;
+
 	wptr w;
 	nptr n;
 	fptr_s f;
@@ -554,12 +556,198 @@ void ATPG::generate_tdfault_list()
 		f->fault_no = fault_num;
 		fault_num++;
 		num_of_tdf_fault += f->eqv_fault_num;
-
 		// cout << f->fault_no << f->node->name << ":" << (f->io?"O":"I") << (f->io?9:(f->index)) << "SA" << f->fault_type << endl;
+	}
+	
+
+	if (fault_order_by_scoap)
+	{
+		cc0.resize(fault_num + 1);
+		cc1.resize(fault_num + 1);
+		co.resize(fault_num + 1);
+		calculate_scoap();
+		fault_reorder();
 	}
 
 	// fprintf(stdout,"#number of equivalent faults = %d\n", fault_num);
 } /* end of generate_fault_list */
+
+void ATPG::calculate_scoap()
+{
+	int i, j, k, temp;
+	wptr w;
+	nptr n;
+
+	for (i = 0; i < ncktwire; ++i)
+	{
+		w = sort_wlist[i];
+		n = w->inode.front();
+		switch (n->type)
+		{
+			case INPUT:
+				cc1[i] = 1;
+				cc0[i] = 1;
+				break;
+			case NOT:
+				cc0[i] = cc1[n->iwire.front()->wlist_index] + 1;
+				cc1[i] = cc0[n->iwire.front()->wlist_index] + 1;
+				break;
+			case BUF:
+				cc1[i] = cc1[n->iwire.front()->wlist_index] + 1;
+				cc0[i] = cc0[n->iwire.front()->wlist_index] + 1;
+				break;
+			case OR:
+				cc0[i] = cc0[n->iwire.front()->wlist_index];
+				cc1[i] = cc1[n->iwire.front()->wlist_index];
+				for (j = 1; j < n->iwire.size(); ++j)
+				{
+					cc0[i] += cc0[n->iwire[j]->wlist_index];
+					if (cc1[i] > cc1[n->iwire[j]->wlist_index])
+					{
+						cc1[i] = cc1[n->iwire[j]->wlist_index];
+					}
+				}
+				cc0[i]++;
+				cc1[i]++;
+				break;
+			case NAND:
+				cc1[i] = cc0[n->iwire.front()->wlist_index];
+				cc0[i] = cc1[n->iwire.front()->wlist_index];
+				for (j = 1; j < n->iwire.size(); ++j)
+				{
+					if (cc1[i] > cc0[n->iwire[j]->wlist_index])
+					{
+						cc1[i] = cc0[n->iwire[j]->wlist_index];
+					}
+					cc0[i] += cc1[n->iwire[j]->wlist_index];
+				}
+				cc0[i]++;
+				cc1[i]++;
+				break;
+			case AND:
+				cc0[i] = cc0[n->iwire.front()->wlist_index];
+				cc1[i] = cc1[n->iwire.front()->wlist_index];
+				for (j = 1; j < n->iwire.size(); ++j)
+				{
+					if (cc0[i] > cc0[n->iwire[j]->wlist_index])
+					{
+						cc0[i] = cc0[n->iwire[j]->wlist_index];
+					}
+					cc1[i] += cc1[n->iwire[j]->wlist_index];
+				}
+				cc0[i]++;
+				cc1[i]++;
+				break;
+			case NOR:
+				cc1[i] = cc0[n->iwire.front()->wlist_index];
+				cc0[i] = cc1[n->iwire.front()->wlist_index];
+				for (j = 1; j < n->iwire.size(); ++j)
+				{
+					cc1[i] += cc0[n->iwire[j]->wlist_index];
+					if (cc0[i] > cc1[n->iwire[j]->wlist_index])
+					{
+						cc0[i] = cc1[n->iwire[j]->wlist_index];
+					}
+				}
+				cc0[i]++;
+				cc1[i]++;
+				break;
+		}
+	}
+
+	for (i = ncktwire - 1; i >= 0; --i)
+	{
+		w = sort_wlist[i];
+		n = w->onode.front();
+
+		switch (n->type)
+		{
+			case OUTPUT:
+				co[i] = 0;
+				break;
+			case NOT:
+			case BUF:
+				co[i] = co[n->owire.front()->wlist_index] + 1;
+				break;
+			case OR:
+			case NOR:
+				co[i] = co[n->owire.front()->wlist_index] + 1;
+				for (j = 0; j < n->iwire.size(); ++j)
+				{
+					if (n->iwire[j] == w)
+						continue;
+					co[i] += cc0[n->iwire[j]->wlist_index];
+				}
+				break;
+			case NAND:
+			case AND:
+				co[i] = co[n->owire.front()->wlist_index] + 1;
+				for (j = 0; j < n->iwire.size(); ++j)
+				{
+					if (n->iwire[j] == w)
+						continue;
+					co[i] += cc1[n->iwire[j]->wlist_index];
+				}
+				break;
+		}
+		// fanout stem
+		for (j = 1; j < w->onode.size(); ++j)
+		{
+			n = w->onode[j];
+			switch (n->type)
+			{
+				case OUTPUT:
+					co[i] = 0;
+					break;
+				case NOT:
+				case BUF:
+					temp = co[n->owire.front()->wlist_index] + 1;
+					break;
+				case OR:
+				case NOR:
+					temp = co[n->owire.front()->wlist_index] + 1;
+					for (k = 0; k < n->iwire.size(); ++k)
+					{
+						if (n->iwire[k] == w)
+							continue;
+						temp += cc0[n->iwire[k]->wlist_index];
+					}
+					break;
+				case NAND:
+				case AND:
+					temp = co[n->owire.front()->wlist_index] + 1;
+					for (k = 0; k < n->iwire.size(); ++k)
+					{
+						if (n->iwire[k] == w)
+							continue;
+						temp += cc1[n->iwire[k]->wlist_index];
+					}
+					break;
+			}
+			if (temp < co[i])
+				co[i] = temp;
+		}
+	}
+}
+void ATPG::fault_reorder()
+{
+	// co(f1) < co(f2) => true
+	vector<fptr> temp_flist;
+	temp_flist.reserve(co.size());
+	for (fptr f : flist_undetect)
+	{
+		temp_flist.push_back(f);
+	}
+	sort(temp_flist.begin(), temp_flist.end(), [this](const fptr f1, const fptr f2)
+			 {
+	if(co[f1->to_swlist] > co[f2->to_swlist]){return true;}
+	return false; });
+	flist_undetect.clear();
+	for (fptr f : temp_flist)
+	{
+		flist_undetect.push_front(f);
+	}
+}
 
 void ATPG::reverse_order_fault_sim()
 {
@@ -572,6 +760,33 @@ void ATPG::reverse_order_fault_sim()
 	}
 	int current_detect_num = 0;
 	for (int i = vectors.size() - 1; i >= 0; i--)
+	{
+		bool redundant = tdfault_sim_a_vector(vectors[i], current_detect_num);
+		if (redundant)
+		{
+			vectors.erase(vectors.begin() + i);
+		}
+	}
+}
+
+void ATPG::random_order_fault_sim()
+{
+	flist_undetect.clear();
+	for (auto &f : flist)
+	{
+		f->detect = FALSE;
+		f->detected_time = 0;
+		flist_undetect.push_front(f.get());
+	}
+	int current_detect_num = 0;
+	// std::vector<int> ord(vectors.size());
+	// std::iota(ord.begin(), ord.end(), 0);
+	// std::shuffle(ord.begin(), ord.end(), std::mt19937{std::random_device{}()});
+	// int stcseed = std::random_device{}();
+	cerr << "stc seed = " << stcseed << endl;
+	std::shuffle(vectors.begin(), vectors.end(), std::mt19937{stcseed});
+	stcseed = (stcmul * stcseed) % 20001019;
+	for (int i = 0; i < vectors.size(); i++)
 	{
 		bool redundant = tdfault_sim_a_vector(vectors[i], current_detect_num);
 		if (redundant)

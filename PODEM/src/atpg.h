@@ -70,11 +70,20 @@ public:
 	void read_vectors(const string &);
 	void set_total_attempt_num(const int &);
 	void set_backtrack_limit(const int &);
+	void set_fault_try(const int &);
+	void set_SCOAP(const bool &);
 	void set_DTC(const bool &);
 	void set_STC(const bool &);
 	void set_SAF_atpg(const bool &);
 	void set_podemx_fail_limit(const int &);
 	void set_podemx_flist_type(const int &);
+	void set_podemx_chance(const int &);
+	void set_podemx_backtrack_limit(const int &);
+	void set_flow(const int &);
+	void set_seed(const int &);
+	void set_stc_time(const int &);
+	void set_stc_seed(const int &);
+	void set_stc_mul(const int &);
 
 	/* defined in input.cpp */
 	void input(const string &);
@@ -99,10 +108,10 @@ public:
 	int detected_num{};
 	bool get_tdfsim_only() { return tdfsim_only; }
 	void reverse_order_fault_sim();
-
-
+	void random_order_fault_sim();
 	/* defined in atpg.cpp */
 	void test();
+	vector<int> cc0, cc1, co;
 
 private:
 	/* alias declaration */
@@ -138,6 +147,7 @@ private:
 	int total_attempt_num; /* number of test generation attempted for each fault  */
 	bool fsim_only;				 /* flag to indicate fault simulation only */
 	bool tdfsim_only;			 /* flag to indicate tdfault simulation only */
+	int fault_num;
 
 	/* used in input.cpp to parse circuit*/
 	int debug;				 /* != 0 if debugging;  this is a switch of debug mode */
@@ -243,24 +253,38 @@ private:
 	int set_uniquely_implied_value(fptr);
 	int backward_imply(wptr, const int &);
 
-	/* TDF atpg */
-	bool SAF_atpg = false;
+	/* New flags */
 	bool dynamic_test_compression = false;
 	bool static_test_compression = false;
+	bool fault_order_by_scoap = false;
+	int flow = 0;		 // 0: original, 1: n=1->n=8
+	int seed = 0;		 // -1: increase, other: specify fixed
+	int stctime = 0; // STC fsim, 0: reverse, 1: random
+	int select_fault_try = 100;
+	int stcseed = 7;
+	int stcmul = 3;
+	// podex parameter
+	int podemx_backtrack_limit = 50;
+	int flist_type = 3; // 1: queue, 2: stack, 3: backtrace PO
+	int fail_continuous_limit = 1000000;
+	int chance = 8;
+
+	/* TDF atpg */
+	bool SAF_atpg = false;
 	int no_of_backtracks_v1{};
 	int no_of_backtracks_v2{};
 	int new_bit;
 	int last_bit;
 	int ncktwire;
 	int ncktin;
-	// podex parameter
-	int flist_type = 1; // 1: queue, 2: stack, 3: backtrace PO
-	int fail_continuous_limit = 1000000;
+	int cur_i;
 
 	int tdf_podem(fptr, int &);
 	int tdf_set_uniquely_implied_value(fptr);
 	void shift();
 	void undo_shift();
+	void calculate_scoap();
+	void fault_reorder();
 	void tdf_podemx();
 	void tdf_podemx_bt(); // backtrace from unknown PO to select sec. fault
 	int tdf_podemx_secondary(fptr);
@@ -278,18 +302,18 @@ private:
 	public:
 		WIRE();
 
-		string name;				/* ascii name of wire */
-		vector<nptr> inode; /* nodes driving this wire */
-		vector<nptr> onode; /* nodes driven by this wire */
-		int value;					/* logic value [0|1|2] of the wire (2 = unknown)
-												NOTE: we use [0|1|2] in fault-free sim
-					but we use [00|11|01] in parallel fault sim  */
-		int level;					/* level of the wire */
-		int wire_value1;		/* (32 bits) represents fault-free value for this wire.
-													 the same [00|11|01] replicated by 16 times (for pfedfs) */
-		int wire_value2;		/* (32 bits) represents values of this wire
-													 in the presence of 16 faults. (for pfedfs) */
-		int wlist_index;		/* index into the sorted_wlist array */
+		string name;								/* ascii name of wire */
+		vector<nptr> inode;					/* nodes driving this wire */
+		vector<nptr> onode;					/* nodes driven by this wire */
+		int value;									/* logic value [0|1|2] of the wire (2 = unknown)
+																NOTE: we use [0|1|2] in fault-free sim
+									but we use [00|11|01] in parallel fault sim  */
+		int level;									/* level of the wire */
+		int wire_value1;						/* (32 bits) represents fault-free value for this wire.
+																	 the same [00|11|01] replicated by 16 times (for pfedfs) */
+		int wire_value2;						/* (32 bits) represents values of this wire
+																	 in the presence of 16 faults. (for pfedfs) */
+		int wlist_index;						/* index into the sorted_wlist array */
 		forward_list<fptr> udflist; // for podemx_bt()
 		//  the following functions control/observe the state of wire
 		//  HCY 2020/2/6
@@ -420,6 +444,6 @@ private:
 		int to_swlist;			 /* index to the sort_wlist[] */
 		int fault_no;				 /* fault index */
 		int detected_time{}; /* for N-detect */
-		bool tried_dtc;  		 // for DTC flag
+		bool tried_dtc;			 // for DTC flag
 	};										 // class FAULT
 };											 // class ATPG

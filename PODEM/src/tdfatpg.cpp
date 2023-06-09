@@ -20,6 +20,10 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 	{
 		sort_wlist[i]->value = U;
 	}
+	if (ncktin == 32)
+	{
+		select_fault_try = 15;
+	}
 	current_backtracks = 0;
 	no_of_backtracks = 0;
 	no_of_backtracks_v1 = 0;
@@ -526,7 +530,7 @@ void ATPG::tdf_podemx()
 			for (fptr fptr_ele : flist_undetect)
 			{
 				// fptr_ele->tried_dtc = false;
-				if (fptr_ele->detect != REDUNDANT)
+				if (fptr_ele->detect != REDUNDANT && (fptr_ele->detected_time >= cur_i - chance))
 				{
 					flist_sec_q.push(fptr_ele);
 				}
@@ -540,7 +544,7 @@ void ATPG::tdf_podemx()
 			for (fptr fptr_ele : flist_undetect)
 			{
 				// fptr_ele->tried_dtc = false;
-				if (fptr_ele->detect != REDUNDANT)
+				if (fptr_ele->detect != REDUNDANT && (fptr_ele->detected_time >= cur_i - chance))
 				{
 					flist_sec_s.push(fptr_ele);
 				}
@@ -693,7 +697,7 @@ void ATPG::tdf_podemx_bt()
 		{
 			return;
 		}
-		// cerr << "	PO_idx: " << U_PO_idx << endl;
+
 		fptr f_secondary = nullptr;
 
 		// backtrace from unknown PO!
@@ -703,33 +707,54 @@ void ATPG::tdf_podemx_bt()
 		bool PO_filled = false;
 
 		q_wire.push(unknown_PO);
+		int sl = 0;
+
 		while (!PO_filled)
 		{
-			while (q_fault.empty())
+			while (q_fault.empty() && sl++ < select_fault_try)
 			{
+				// cerr << "get fault " << q_wire.size() << endl;
 				// get fault
 				if (q_wire.empty())
 				{
 					break;
 				}
-				for (wptr w : q_wire.front()->inode.front()->iwire)
+				else
 				{
-					if (w->value == U)
+					// cerr << "q_wire not empty\n";
+					for (wptr w : q_wire.front()->inode.front()->iwire)
 					{
-						q_wire.push(w);
+						if (w->value == U)
+						{
+							q_wire.push(w);
+							// cerr << "q_wire pushed\n";
+						}
 					}
-				}
-				for (fptr f : q_wire.front()->udflist)
-				{
-					if (f->detect != REDUNDANT && f->tried_dtc != true)
+
+					if (!q_wire.front()->udflist.empty())
 					{
-						q_fault.push(f);
+						// cerr << "not empty!\n";
+						for (fptr f : q_wire.front()->udflist)
+						{
+							// cerr << f->fault_no << " " << f->tried_dtc << " " << f->detect << endl;
+							if (f->detect != REDUNDANT && f->tried_dtc != true && (f->detected_time >= cur_i - chance))
+							{
+								q_fault.push(f);
+								// cerr << "q_fault pushed\n";
+							}
+							else
+							{
+							}
+						}
 					}
+
+					// cerr << "ok\n";
+					q_wire.pop();
 				}
-				q_wire.pop();
 			}
-			if (q_fault.empty())
+			if (q_fault.empty() || (select_fault_try == 0))
 			{
+				// cerr << "done for this PO\n";
 				break; // try next unknown PO
 			}
 			f_secondary = q_fault.front();
@@ -789,14 +814,19 @@ void ATPG::tdf_podemx_bt()
 			{
 				case TRUE:
 					// cerr << "	success\n";
-					PO_filled = (unknown_PO->value != U);
+					if (unknown_PO->value != U)
+					{
+						PO_filled = true;
+					}
 					break;
 				default:
 					// cerr << "	qq\n";
 					break;
 			}
+			// cerr << "finish podemx second\n";
 			f_secondary->tried_dtc = true;
 		}
+
 		if (unknown_PO->value == U)
 		{
 			U_PO_idx++;
@@ -807,6 +837,7 @@ void ATPG::tdf_podemx_bt()
 
 int ATPG::tdf_podemx_secondary(const fptr fault)
 {
+	// cerr << "podemx_second\n";
 	// v2 then v1
 	int i;
 	wptr wpi;													// points to the PI currently being assigned
@@ -852,12 +883,16 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 	 * 1. number of backtracks is equal to or larger than limit
 	 * 2. no_test
 	 * 3. already find a test pattern AND no_of_patterns meets required total_attempt_num */
-	while ((no_of_backtracks < backtrack_limit) && !no_test &&
+	// int dbg = 1;
+	while ((no_of_backtracks < podemx_backtrack_limit) && !no_test &&
 				 !(find_test))
 	{
+		// cerr << dbg << endl;
+		// dbg++;
 		/* check if test possible.   Fig. 7.1 */
 		if (wpi = test_possible(fault))
 		{
+			// cerr << "	possible\n";
 			wpi->set_changed();
 			/* insert a new PI into decision_tree */
 			decision_tree.push_front(wpi);
@@ -867,6 +902,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 
 			while (!decision_tree.empty() && (wpi == nullptr))
 			{
+				// cerr << "	trying\n";
 				/* if both 01 already tried, backtrack. Fig.7.7 */
 				if (decision_tree.front()->is_all_assigned())
 				{
@@ -892,7 +928,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 
 		/* this again loop is to generate multiple patterns for a single fault
 		 * this part is NOT in the original PODEM paper  */
-
+		// cerr << "if wpi\n";
 		if (wpi)
 		{
 			sim();
@@ -903,22 +939,24 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 				find_test = true;
 			} // if check_test()
 		}		// again
+				// cerr << "end if\n";
 	}			// while (three conditions)
-
+	// cerr << "clear\n";
 	/* clear everything */
 	for (wptr wptr_ele : decision_tree)
 	{
 		wptr_ele->remove_all_assigned();
 	}
 	decision_tree.clear();
-
+	// cerr << "clean\n";
 	undo_shift();
 	sim();
 	no_of_backtracks = 0;
-
+	// cerr << "start gen v1\n";
 	// gen v1
 	if (find_test)
 	{
+		// cerr << "find test\n";
 		find_test = false;
 		wptr obj_wire;
 		if (fault->io)
@@ -935,7 +973,6 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 		}
 		else
 		{
-
 			switch (tdf_set_uniquely_implied_value(fault))
 			{
 				case TRUE: // if a  PI is assigned
@@ -947,7 +984,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 				case FALSE:
 					break; // if no PI is reached, keep on backtracing. Fig 7.A
 			}
-			while ((no_of_backtracks < backtrack_limit) && !no_test /*&& !(find_test)*/)
+			while ((no_of_backtracks < podemx_backtrack_limit) && !no_test /*&& !(find_test)*/)
 			{
 				// wpi = find_pi_assignment(obj_wire, fault->fault_type);
 				if (wpi = find_pi_assignment(obj_wire, fault->fault_type))
@@ -1003,7 +1040,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 			}
 		}
 	}
-
+	// cerr << "clear again\n";
 	for (wptr wptr_ele : decision_tree)
 	{
 		wptr_ele->remove_all_assigned();
@@ -1017,7 +1054,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 		shift();
 		return (TRUE);
 	}
-
+	// cerr << "no find test\n";
 	// restore prime PIs for next secondary fault
 	for (i = 0; i < ncktin; i++)
 	{
@@ -1035,6 +1072,7 @@ int ATPG::tdf_podemx_secondary(const fptr fault)
 		sort_wlist[i]->value = U;
 	}
 	sim();
+	// cerr << "why?\n";
 	if (no_test)
 	{
 		return (FALSE);

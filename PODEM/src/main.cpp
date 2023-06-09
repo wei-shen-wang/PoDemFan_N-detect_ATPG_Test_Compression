@@ -50,6 +50,11 @@ int main(int argc, char *argv[])
 			atpg.set_SAF_atpg(false);
 			i += 1;
 		}
+		else if (strcmp(argv[i], "-scoap") == 0)
+		{
+			atpg.set_SCOAP(true);
+			i += 1;
+		}
 		else if (strcmp(argv[i], "-dtc") == 0)
 		{
 			atpg.set_DTC(true);
@@ -60,7 +65,43 @@ int main(int argc, char *argv[])
 			atpg.set_STC(true);
 			i += 1;
 		}
-		else if (strcmp(argv[i], "-pdxflist") == 0) // podemx flist type, 1~3, default=1
+		else if (strcmp(argv[i], "-sl") == 0)
+		{
+			atpg.set_fault_try(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-flow") == 0)
+		{
+			atpg.set_flow(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-seed") == 0)
+		{
+			atpg.set_seed(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-stctime") == 0)
+		{
+			atpg.set_stc_time(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-stcseed") == 0)
+		{
+			atpg.set_stc_seed(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-stcmul") == 0)
+		{
+			atpg.set_stc_mul(atoi(argv[i + 1]));
+			i += 2;
+		}
+
+		else if (strcmp(argv[i], "-pdxbt") == 0)
+		{
+			atpg.set_podemx_backtrack_limit(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-pdxfl") == 0) // type of podemx secondary fault list
 		{
 			atpg.set_podemx_flist_type(atoi(argv[i + 1]));
 			i += 2;
@@ -68,6 +109,11 @@ int main(int argc, char *argv[])
 		else if (strcmp(argv[i], "-pdxfail") == 0) // podemx continuous fail limit
 		{
 			atpg.set_podemx_fail_limit(atoi(argv[i + 1]));
+			i += 2;
+		}
+		else if (strcmp(argv[i], "-chance") == 0) // podemx fault detection range
+		{
+			atpg.set_podemx_chance(atoi(argv[i + 1]));
 			i += 2;
 		}
 		// for N-detect fault simulation
@@ -161,6 +207,11 @@ void ATPG::set_tdfsim_only(const bool &b)
 	this->tdfsim_only = b;
 }
 
+void ATPG::set_SAF_atpg(const bool &b)
+{
+	this->SAF_atpg = b;
+}
+
 void ATPG::set_total_attempt_num(const int &i)
 {
 	this->total_attempt_num = i;
@@ -169,6 +220,16 @@ void ATPG::set_total_attempt_num(const int &i)
 void ATPG::set_backtrack_limit(const int &i)
 {
 	this->backtrack_limit = i;
+}
+
+void ATPG::set_fault_try(const int &i)
+{
+	this->select_fault_try = i;
+}
+
+void ATPG::set_SCOAP(const bool &b)
+{
+	this->fault_order_by_scoap = b;
 }
 
 void ATPG::set_DTC(const bool &b)
@@ -181,16 +242,39 @@ void ATPG::set_STC(const bool &b)
 	this->static_test_compression = b;
 }
 
-void ATPG::set_SAF_atpg(const bool &b)
+void ATPG::set_flow(const int &i)
 {
-	this->SAF_atpg = b;
+	this->flow = i;
+}
+void ATPG::set_seed(const int &i)
+{
+	this->seed = i;
+}
+void ATPG::set_stc_time(const int &i)
+{
+	this->stctime = i;
+}
+void ATPG::set_stc_seed(const int &i)
+{
+	this->stcseed = i;
+}
+void ATPG::set_stc_mul(const int &i)
+{
+	this->stcmul = i;
 }
 
+void ATPG::set_podemx_backtrack_limit(const int &i)
+{
+	this->podemx_backtrack_limit = i;
+}
 void ATPG::set_podemx_fail_limit(const int &i)
 {
 	this->fail_continuous_limit = i;
 }
-
+void ATPG::set_podemx_chance(const int &i)
+{
+	this->chance = i;
+}
 void ATPG::set_podemx_flist_type(const int &i)
 {
 	this->flist_type = i;
