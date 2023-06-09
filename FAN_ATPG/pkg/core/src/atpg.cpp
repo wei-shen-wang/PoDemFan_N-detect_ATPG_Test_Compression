@@ -631,10 +631,10 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 			FaultPtrList faultListTemp = faultPtrListForGen;
 			// pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 			pSimulator_->goodSim();
-			// for (std::list<Fault *>::reverse_iterator it = faultListTemp.rbegin(); it != faultListTemp.rend(); ++it)
-			for (Fault *pFault : faultListTemp)
+			// for (Fault *pFault : faultListTemp)
+			for (std::list<Fault *>::reverse_iterator it = faultListTemp.rbegin(); it != faultListTemp.rend(); ++it)
 			{
-				// Fault *pFault = *it;
+				Fault *pFault = *it;
 				if (pFault->faultState_ == Fault::DT)
 				{
 					continue;
