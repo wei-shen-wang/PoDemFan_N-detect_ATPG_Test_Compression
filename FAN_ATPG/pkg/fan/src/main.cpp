@@ -108,27 +108,51 @@ int main(int argc, char **argv)
 			// Do TDF ATPG
 			if (useCompression)
 			{
-				scriptStr = {
-						"read_lib techlib/mod_nangate45.mdt",
-						"read_netlist " + inputCktFile,
-						"report_netlist",
-						"build_circuit --frame 1",
-						"report_circuit",
-						"set_fault_type tdf",
-						"add_fault --all",
-						"set_static_compression on",
-						"set_dynamic_compression on",
-						"set_X-Fill on",
-						"set_pattern_type LOC",
-						"run_atpg -n " + std::to_string(ndet),
-						"report_statistics"};
+				if (!remainFormat)
+				{
+					scriptStr = {
+							"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
+							"read_netlist " + inputCktFile,
+							"report_netlist",
+							"build_circuit --frame 1",
+							"report_circuit",
+							"set_fault_type tdf",
+							"add_fault --all",
+							"set_static_compression on",
+							"set_dynamic_compression on",
+							"set_X-Fill on",
+							"set_pattern_type LOC",
+							"run_atpg -n " + std::to_string(ndet),
+							"report_statistics"};
+				}
+				else
+				{
+					// This is used for debugging, TDFATPG, remainFormat on, report fault
+					scriptStr = {
+							"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
+							"read_netlist " + inputCktFile,
+							"report_netlist",
+							"build_circuit --frame 1",
+							"report_circuit",
+							"set_fault_type tdf",
+							"add_fault --all",
+							"set_static_compression on",
+							"set_dynamic_compression on",
+							"set_X-Fill on",
+							"set_pattern_type LOC",
+							"run_atpg -n " + std::to_string(ndet),
+							"report_statistics",
+							"report_fault -s au",
+							"report_fault -s ab",
+							"write_pattern ./tdf_test.pat"};
+				}
 			}
 			else
 			{
 				if (!remainFormat)
 				{
 					scriptStr = {
-							"read_lib techlib/mod_nangate45.mdt",
+							"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 							"read_netlist " + inputCktFile,
 							"report_netlist",
 							"build_circuit --frame 1",
@@ -146,7 +170,7 @@ int main(int argc, char **argv)
 				{
 					// This is used for debugging, TDFATPG, remainFormat on, report fault
 					scriptStr = {
-							"read_lib techlib/mod_nangate45.mdt",
+							"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 							"read_netlist " + inputCktFile,
 							"report_netlist",
 							"build_circuit --frame 1",
@@ -171,7 +195,7 @@ int main(int argc, char **argv)
 			if (useCompression)
 			{
 				scriptStr = {
-						"read_lib techlib/mod_nangate45.mdt",
+						"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 						"read_netlist " + inputCktFile,
 						"report_netlist",
 						"build_circuit --frame 1",
@@ -187,7 +211,7 @@ int main(int argc, char **argv)
 			else
 			{
 				scriptStr = {
-						"read_lib techlib/mod_nangate45.mdt",
+						"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 						"read_netlist " + inputCktFile,
 						"report_netlist",
 						"build_circuit --frame 1",
@@ -208,7 +232,7 @@ int main(int argc, char **argv)
 		if (isTDF)
 		{
 			scriptStr = {
-					"read_lib techlib/mod_nangate45.mdt",
+					"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 					"read_netlist " + inputCktFile,
 					"report_netlist",
 					"build_circuit --frame 1",
@@ -224,7 +248,7 @@ int main(int argc, char **argv)
 		else
 		{
 			scriptStr = {
-					"read_lib techlib/mod_nangate45.mdt",
+					"read_lib ./FAN_ATPG/techlib/mod_nangate45.mdt",
 					"read_netlist " + inputCktFile,
 					"report_netlist",
 					"build_circuit --frame 1",

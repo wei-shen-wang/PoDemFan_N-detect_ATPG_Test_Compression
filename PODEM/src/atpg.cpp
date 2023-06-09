@@ -282,13 +282,13 @@ void ATPG::test()
 	if (static_test_compression)
 	{
 		reverse_order_fault_sim();
-		cerr << "reverse STC, TL = " << vectors.size() << endl;
+		// cerr << "reverse STC, TL = " << vectors.size() << endl;
 		if (stctime >= 0)
 		{
 			while (stctime--)
 			{
 				random_order_fault_sim();
-				cerr << "random  STC, TL = " << vectors.size() << endl;
+				// cerr << "random  STC, TL = " << vectors.size() << endl;
 			}
 		}
 		else
@@ -352,7 +352,7 @@ ATPG::ATPG()
 	/* orginally assigned in init_flist.c */
 	this->num_of_gate_fault = 0; // totle number of faults in the whole circuit
 
-	
+
 
 	/* orginally assigned in test.c */
 	this->in_vector_no = 0; /* number of test vectors generated */
