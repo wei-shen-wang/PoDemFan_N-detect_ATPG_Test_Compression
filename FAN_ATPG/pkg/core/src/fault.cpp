@@ -11,6 +11,11 @@
 
 using namespace CoreNs;
 
+bool Fault::compare_detect(FaultPtrListIter fault1, FaultPtrListIter fault2)
+{
+	return (*fault1)->detection_ < (*fault2)->detection_;
+}
+
 bool Fault::compare_co(const Fault &fault1, const Fault &fault2)
 {
 	return fault1.co_ > fault2.co_;

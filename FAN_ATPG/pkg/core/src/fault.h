@@ -62,17 +62,18 @@ namespace CoreNs
 		Fault();
 		// Fault(const Fault &fault);
 		Fault(int gateID, FAULT_TYPE faultType, int faultyLine, int equivalent = 1, FAULT_STATE faultState = UD);
-		static bool compare_co(const Fault& fault1, const Fault& fault2);
+		static bool compare_detect(FaultPtrListIter fault1, FaultPtrListIter fault2);
+		static bool compare_co(const Fault &fault1, const Fault &fault2);
 
 		// int aggr_;            // ID of the aggressor gate.
-		int gateID_;             // ID of the faulty gate.
-		FAULT_TYPE faultType_;   // Fault type.
-		int faultyLine_;         // Faulty line location: 0 means gate output fault,
-		                         // 1+ means gate input fault on the corresponding gate input line.
-		int detection_;          // Number of detection.
+		int gateID_;						 // ID of the faulty gate.
+		FAULT_TYPE faultType_;	 // Fault type.
+		int faultyLine_;				 // Faulty line location: 0 means gate output fault,
+														 // 1+ means gate input fault on the corresponding gate input line.
+		int detection_;					 // Number of detection.
 		FAULT_STATE faultState_; // Fault state.
-		int equivalent_;         // The number of equivalent faults, used to calculate uncollapsed fault coverage.
-		int V1activated_; 			 // For VLSI final. This variable is true if the fault is activated by V1 pattern, used in TDF sim.
+		int equivalent_;				 // The number of equivalent faults, used to calculate uncollapsed fault coverage.
+		int V1activated_;				 // For VLSI final. This variable is true if the fault is activated by V1 pattern, used in TDF sim.
 		int co_;
 	};
 
@@ -92,10 +93,10 @@ namespace CoreNs
 		void extractFaultFromCircuit(Circuit *pCircuit);
 
 		std::vector<int> gateIndexToFaultIndex_; // Map gate index to fault list index.
-		std::vector<Fault> uncollapsedFaults_;   // Record faults without fault collapsing, used for adding part of faults for ATPG.
-		std::vector<Fault> extractedFaults_;     // Faults extracted from the circuit.
-		FaultPtrList faultsInCircuit_;           // Faults used in the ATPG.
-		FAULTLIST_TYPE faultListType_;           // Fault list type.
+		std::vector<Fault> uncollapsedFaults_;	 // Record faults without fault collapsing, used for adding part of faults for ATPG.
+		std::vector<Fault> extractedFaults_;		 // Faults extracted from the circuit.
+		FaultPtrList faultsInCircuit_;					 // Faults used in the ATPG.
+		FAULTLIST_TYPE faultListType_;					 // Fault list type.
 	};
 
 	inline Fault::Fault()
