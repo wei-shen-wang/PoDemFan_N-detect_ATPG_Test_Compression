@@ -217,7 +217,7 @@ void Atpg::generatePatternSet(PatternProcessor *pPatternProcessor, FaultListExtr
 // **************************************************************************
 void Atpg::setupCircuitParameter()
 {
-	// calSCOAP();
+	calSCOAP();
 	// set depthFromPo_
 	calculateGateDepthFromPO();
 
@@ -631,8 +631,10 @@ void Atpg::TransitionDelayFaultATPG(FaultPtrList &faultPtrListForGen, PatternPro
 			FaultPtrList faultListTemp = faultPtrListForGen;
 			// pSimulator_->parallelFaultFaultSimWithOnePattern(pPatternProcessor->patternVector_.back(), faultPtrListForGen);
 			pSimulator_->goodSim();
+			// for (std::list<Fault *>::reverse_iterator it = faultListTemp.rbegin(); it != faultListTemp.rend(); ++it)
 			for (Fault *pFault : faultListTemp)
 			{
+				// Fault *pFault = *it;
 				if (pFault->faultState_ == Fault::DT)
 				{
 					continue;
@@ -2402,6 +2404,47 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 					case Gate::OR3:
 					case Gate::OR4:
 					case Gate::OR5:
+						if (piValueToAssign == H)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->cc1_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc1_)
+										{
+											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						else if (piValueToAssign == L)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->cc0_ > this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc0_)
+										{
+											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						break;
 					case Gate::NAND2:
 					case Gate::NAND3:
 					case Gate::NAND4:
@@ -2417,7 +2460,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 									}
 									else
 									{
-										if (pNextObjectGate->numLevel_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										if (pNextObjectGate->cc0_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc0_)
 										{
 											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
 										}
@@ -2449,12 +2492,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 					case Gate::NOR2:
 					case Gate::NOR3:
 					case Gate::NOR4:
-					case Gate::AND2:
-					case Gate::AND3:
-					case Gate::AND4:
-					case Gate::AND5:
-					case Gate::AND8:
-					case Gate::AND9:
 						if (piValueToAssign == H)
 						{
 							for (int j = 0; j < pObjectGate->numFI_; ++j)
@@ -2467,7 +2504,7 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 									}
 									else
 									{
-										if (pNextObjectGate->numLevel_ > this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										if (pNextObjectGate->cc0_ > this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc0_)
 										{
 											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
 										}
@@ -2487,7 +2524,54 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 									}
 									else
 									{
-										if (pNextObjectGate->numLevel_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].numLevel_)
+										if (pNextObjectGate->cc1_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc1_)
+										{
+											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						break;
+					case Gate::AND2:
+					case Gate::AND3:
+					case Gate::AND4:
+					case Gate::AND5:
+					case Gate::AND8:
+					case Gate::AND9:
+						if (piValueToAssign == H)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->cc1_ > this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc1_)
+										{
+											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+										}
+									}
+								}
+							}
+						}
+						else if (piValueToAssign == L)
+						{
+							for (int j = 0; j < pObjectGate->numFI_; ++j)
+							{
+								if (this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].atpgVal_ == X)
+								{
+									if (!pNextObjectGate)
+									{
+										pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
+									}
+									else
+									{
+										if (pNextObjectGate->cc0_ < this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]].cc0_)
 										{
 											pNextObjectGate = &(this->pCircuit_->circuitGates_[pObjectGate->faninVector_[j]]);
 										}
@@ -6189,7 +6273,6 @@ Atpg::IMPLICATION_STATUS Atpg::evaluateAndSetFaultyGateAtpgVal(Gate *pGate)
 // **************************************************************************
 void Atpg::staticTestCompressionByReverseFaultSimulation(PatternProcessor *pPatternProcessor, FaultPtrList &originalFaultList)
 {
-	int seed = 0;
 
 	for (Fault *pFault : originalFaultList)
 	{
