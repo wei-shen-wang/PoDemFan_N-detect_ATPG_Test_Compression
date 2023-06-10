@@ -338,7 +338,6 @@ private:
 		void remove_changed() { flag &= ~128; }
 		bool is_(int type) { return flag & type; }
 		bool is_scheduled() { return flag & 1; }
-		// bool is_all_assigned() { return flag & 2; }
 		bool is_input() { return flag & 4; }
 		bool is_output() { return flag & 8; }
 		bool is_marked() { return flag & 16; }
