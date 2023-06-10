@@ -153,23 +153,6 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 	{
 		int fault_detected[num_of_pattern] = {0};
 		f = *pos;
-		// f->detect_cur = FALSE;
-		// if (f->detect == REDUNDANT)
-		// {
-		// 	continue;
-		// } /* ignore redundant faults */
-		// if (f->activate == FALSE)
-		// {
-		// 	if ((next(pos, 1) == flist_undetect.cend()) && num_of_fault > 0)
-		// 	{
-		// 		goto do_fsim;
-		// 	}
-		// 	else
-		// 	{
-		// 		continue;
-		// 	}
-		// } /* ignore redundant faults */
-
 		/* consider only active (aka. excited) fault
 		 * (sa1 with correct output of 0 or sa0 with correct output of 1) */
 		if (f->fault_type != sort_wlist[f->to_swlist]->value && f->detect != REDUNDANT && f->activate == TRUE)
@@ -180,12 +163,6 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 			if ((f->node->type == OUTPUT) ||
 					(f->io == GO && sort_wlist[f->to_swlist]->is_output()))
 			{
-				// f->detect = TRUE;
-				// if (f->detect_cur == FALSE)
-				// {
-				// 	f->detected_time++;
-				// 	f->detect_cur = TRUE;
-				// }
 				redundant = false;
 				f->detected_time++;
 				if (f->detected_time == detected_num)
@@ -242,7 +219,6 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 						/* if the faulty_wire is a primary output, it is detected */
 						if (faulty_wire->is_output())
 						{
-							// f->detect = TRUE;
 							redundant = false;
 							f->detected_time++;
 							if (f->detected_time == detected_num)
@@ -362,12 +338,6 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 				if (fptr_ele->detect == TRUE)
 				{
 					string IO;
-					/*if(fptr_ele->io == GO) IO = "GO";
-					else IO = "GI";
-					if(fptr_ele->fault_type == STR)
-						cout << "fault "<<  fptr_ele->fault_no<< ": STR at wire-"<< sort_wlist[fptr_ele->to_swlist]->name<< ", "<< IO<< " of "<< fptr_ele->node->name <<endl;
-					else
-						cout << "fault "<<  fptr_ele->fault_no<< ": STF at wire- "<< sort_wlist[fptr_ele->to_swlist]->name<< ", "<< IO<< " of "<< fptr_ele->node->name <<endl;*/
 					num_of_current_detect += fptr_ele->eqv_fault_num;
 					sort_wlist[fptr_ele->to_swlist]->udflist.remove(fptr_ele);
 					return true;
@@ -444,7 +414,6 @@ void ATPG::generate_tdfault_list()
 		/* for OR NAND NOT BUF, their GI fault is equivalent to GO SA1 fault */
 		switch (n->type)
 		{
-
 			case NOT:
 			case BUF:
 				f->eqv_fault_num = 1;
@@ -556,9 +525,7 @@ void ATPG::generate_tdfault_list()
 		f->fault_no = fault_num;
 		fault_num++;
 		num_of_tdf_fault += f->eqv_fault_num;
-		// cout << f->fault_no << f->node->name << ":" << (f->io?"O":"I") << (f->io?9:(f->index)) << "SA" << f->fault_type << endl;
 	}
-	
 
 	if (fault_order_by_scoap)
 	{
@@ -569,7 +536,6 @@ void ATPG::generate_tdfault_list()
 		fault_reorder();
 	}
 
-	// fprintf(stdout,"#number of equivalent faults = %d\n", fault_num);
 } /* end of generate_fault_list */
 
 void ATPG::calculate_scoap()
@@ -731,7 +697,6 @@ void ATPG::calculate_scoap()
 }
 void ATPG::fault_reorder()
 {
-	// co(f1) < co(f2) => true
 	vector<fptr> temp_flist;
 	temp_flist.reserve(co.size());
 	for (fptr f : flist_undetect)
@@ -782,8 +747,6 @@ void ATPG::random_order_fault_sim()
 	// std::vector<int> ord(vectors.size());
 	// std::iota(ord.begin(), ord.end(), 0);
 	// std::shuffle(ord.begin(), ord.end(), std::mt19937{std::random_device{}()});
-	// int stcseed = std::random_device{}();
-	cerr << "stc seed = " << stcseed << endl;
 	std::shuffle(vectors.begin(), vectors.end(), std::mt19937{stcseed});
 	stcseed = (stcmul * stcseed) % 20001019;
 	for (int i = 0; i < vectors.size(); i++)

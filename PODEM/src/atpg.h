@@ -257,12 +257,13 @@ private:
 	bool dynamic_test_compression = false;
 	bool static_test_compression = false;
 	bool fault_order_by_scoap = false;
-	int flow = 0;		 // 0: original, 1: n=1->n=8
-	int seed = 0;		 // -1: increase, other: specify fixed
-	int stctime = 0; // STC fsim, 0: reverse, 1: random
+	int flow = 0;	 // 0: original, 1: n=1->n=8
+	int seed = 20; // -1: increase, other: specify fixed
+	int stctime = -5;
 	int select_fault_try = 100;
-	int stcseed = 7;
-	int stcmul = 3;
+	int stcseed = 26;
+
+	int stcmul = 19;
 	// podex parameter
 	int podemx_backtrack_limit = 50;
 	int flist_type = 3; // 1: queue, 2: stack, 3: backtrace PO
@@ -319,7 +320,6 @@ private:
 		//  HCY 2020/2/6
 		void set_(int type) { flag |= type; }
 		void set_scheduled() { flag |= 1; } // Set scheduled when the input of the gate driving it change.
-		// void set_all_assigned() { flag |= 2; }		// Set all assigned if both assign 0 and assign 1 already tried.
 		void set_input() { flag |= 4; }						// Set input if the wire is PI.
 		void set_output() { flag |= 8; }					// Set output if the wire is PO.
 		void set_marked() { flag |= 16; }					// Set marked when the wire is already leveled.
@@ -328,7 +328,6 @@ private:
 		void set_changed() { flag |= 128; }				// Set changed if the logic value on this wire has recently been changed.
 		void remove_(int type) { flag &= ~type; }
 		void remove_scheduled() { flag &= ~1; }
-		// void remove_all_assigned() { flag &= ~2; }
 		void remove_input() { flag &= ~4; }
 		void remove_output() { flag &= ~8; }
 		void remove_marked() { flag &= ~16; }
@@ -337,7 +336,6 @@ private:
 		void remove_changed() { flag &= ~128; }
 		bool is_(int type) { return flag & type; }
 		bool is_scheduled() { return flag & 1; }
-		// bool is_all_assigned() { return flag & 2; }
 		bool is_input() { return flag & 4; }
 		bool is_output() { return flag & 8; }
 		bool is_marked() { return flag & 16; }

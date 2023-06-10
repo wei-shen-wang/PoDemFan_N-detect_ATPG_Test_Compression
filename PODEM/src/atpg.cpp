@@ -126,13 +126,10 @@ void ATPG::test()
 	{
 		while (cur_i <= detected_num)
 		{
-			cerr << "cur i = " << cur_i << endl;
 			if (cur_i > 1)
 			{
 				for (fptr fptr_ele : flist_undetect)
 				{
-					// cerr << fptr_ele->fault_no << ": "
-					// 		 << fptr_ele->detected_time << " " << fptr_ele->test_tried << endl;
 					if (!fptr_ele->test_tried && (fptr_ele->detected_time == cur_i - 1))
 					{
 						fault_under_test = fptr_ele;
@@ -146,8 +143,6 @@ void ATPG::test()
 				switch (tdf_podem(fault_under_test, current_backtracks))
 				{
 					case TRUE:
-						// if (total_attempt_num == 1)
-						// {
 						/* form a vector */
 						if (seed == -1)
 						{
@@ -172,21 +167,10 @@ void ATPG::test()
 						vec.push_back(itoc(last_bit));
 						vec.push_back(itoc(cktin[0]->value));
 						vectors.push_back(vec);
-						// cerr << vectors.back() << endl;
-						/*by defect, we want only one pattern per fault */
-						/*run a fault simulation, drop ALL detected faults */
-
+						
 						tdfault_sim_a_vector(vec, current_detect_num);
 						total_detect_num += current_detect_num;
-						// }
-						/* If we want mutiple petterns per fault,
-						 * NO fault simulation.  drop ONLY the fault under test */
-						// else // redundant
-						// {
-						// 	fault_under_test->detect = TRUE;
-						// 	/* drop fault_under_test */
-						// 	flist_undetect.remove(fault_under_test);
-						// }
+						
 						break;
 					case FALSE:
 						fault_under_test->detect = REDUNDANT;
@@ -200,13 +184,9 @@ void ATPG::test()
 						break;
 				}
 
-				// fault_under_test->test_tried = true;
-
 				fault_under_test = nullptr;
 				for (fptr fptr_ele : flist_undetect)
 				{
-					// cerr << fptr_ele->fault_no << ": "
-					// 		 << fptr_ele->detected_time << " " << fptr_ele->test_tried << endl;
 					if (!fptr_ele->test_tried && (fptr_ele->detected_time == cur_i - 1))
 					{
 						fault_under_test = fptr_ele;
@@ -214,7 +194,6 @@ void ATPG::test()
 					}
 				}
 				total_no_of_backtracks += current_backtracks; // accumulate number of backtracks
-				// cerr << current_detect_num << endl;
 				no_of_calls++;
 			}
 			cur_i++;
@@ -282,13 +261,11 @@ void ATPG::test()
 	if (static_test_compression)
 	{
 		reverse_order_fault_sim();
-		// cerr << "reverse STC, TL = " << vectors.size() << endl;
 		if (stctime >= 0)
 		{
 			while (stctime--)
 			{
 				random_order_fault_sim();
-				// cerr << "random  STC, TL = " << vectors.size() << endl;
 			}
 		}
 		else
@@ -299,7 +276,6 @@ void ATPG::test()
 			while (fail < stctime)
 			{
 				random_order_fault_sim();
-				cerr << "random  STC, TL = " << vectors.size() << endl;
 				if (vectors.size() == v_size)
 				{
 					fail++;
@@ -352,9 +328,7 @@ ATPG::ATPG()
 	/* orginally assigned in init_flist.c */
 	this->num_of_gate_fault = 0; // totle number of faults in the whole circuit
 
-
-
-	/* orginally assigned in test.c */
+		/* orginally assigned in test.c */
 	this->in_vector_no = 0; /* number of test vectors generated */
 }
 
