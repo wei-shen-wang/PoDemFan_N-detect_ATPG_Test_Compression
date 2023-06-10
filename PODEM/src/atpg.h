@@ -257,13 +257,13 @@ private:
 	bool dynamic_test_compression = false;
 	bool static_test_compression = false;
 	bool fault_order_by_scoap = false;
-	int flow = 0;	 // 0: original, 1: n=1->n=8
-	int seed = 20; // -1: increase, other: specify fixed
+	int flow = 1;	 // 0: original, 1: n=1->n=8
+	int seed = 14; // -1: increase, other: specify fixed
 	int stctime = -5;
 	int select_fault_try = 100;
-	int stcseed = 26;
+	int stcseed = 7;
 
-	int stcmul = 19;
+	int stcmul = 3;
 	// podex parameter
 	int podemx_backtrack_limit = 50;
 	int flist_type = 3; // 1: queue, 2: stack, 3: backtrace PO
@@ -319,7 +319,7 @@ private:
 		//  the following functions control/observe the state of wire
 		//  HCY 2020/2/6
 		void set_(int type) { flag |= type; }
-		void set_scheduled() { flag |= 1; } // Set scheduled when the input of the gate driving it change.
+		void set_scheduled() { flag |= 1; }				// Set scheduled when the input of the gate driving it change.
 		void set_input() { flag |= 4; }						// Set input if the wire is PI.
 		void set_output() { flag |= 8; }					// Set output if the wire is PO.
 		void set_marked() { flag |= 16; }					// Set marked when the wire is already leveled.
