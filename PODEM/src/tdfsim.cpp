@@ -558,7 +558,6 @@ void ATPG::generate_tdfault_list()
 		num_of_tdf_fault += f->eqv_fault_num;
 		// cout << f->fault_no << f->node->name << ":" << (f->io?"O":"I") << (f->io?9:(f->index)) << "SA" << f->fault_type << endl;
 	}
-	
 
 	if (fault_order_by_scoap)
 	{
@@ -783,7 +782,7 @@ void ATPG::random_order_fault_sim()
 	// std::iota(ord.begin(), ord.end(), 0);
 	// std::shuffle(ord.begin(), ord.end(), std::mt19937{std::random_device{}()});
 	// int stcseed = std::random_device{}();
-	cerr << "stc seed = " << stcseed << endl;
+	// cerr << "stc seed = " << stcseed << endl;
 	std::shuffle(vectors.begin(), vectors.end(), std::mt19937{stcseed});
 	stcseed = (stcmul * stcseed) % 20001019;
 	for (int i = 0; i < vectors.size(); i++)

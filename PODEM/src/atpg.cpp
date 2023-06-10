@@ -126,7 +126,7 @@ void ATPG::test()
 	{
 		while (cur_i <= detected_num)
 		{
-			cerr << "cur i = " << cur_i << endl;
+			// cerr << "cur i = " << cur_i << endl;
 			if (cur_i > 1)
 			{
 				for (fptr fptr_ele : flist_undetect)
@@ -282,13 +282,13 @@ void ATPG::test()
 	if (static_test_compression)
 	{
 		reverse_order_fault_sim();
-		cerr << "reverse STC, TL = " << vectors.size() << endl;
+		// cerr << "reverse STC, TL = " << vectors.size() << endl;
 		if (stctime >= 0)
 		{
 			while (stctime--)
 			{
 				random_order_fault_sim();
-				cerr << "random  STC, TL = " << vectors.size() << endl;
+				// cerr << "random  STC, TL = " << vectors.size() << endl;
 			}
 		}
 		else
@@ -299,7 +299,7 @@ void ATPG::test()
 			while (fail < stctime)
 			{
 				random_order_fault_sim();
-				cerr << "random  STC, TL = " << vectors.size() << endl;
+				// cerr << "random  STC, TL = " << vectors.size() << endl;
 				if (vectors.size() == v_size)
 				{
 					fail++;
@@ -352,9 +352,7 @@ ATPG::ATPG()
 	/* orginally assigned in init_flist.c */
 	this->num_of_gate_fault = 0; // totle number of faults in the whole circuit
 
-	
-
-	/* orginally assigned in test.c */
+		/* orginally assigned in test.c */
 	this->in_vector_no = 0; /* number of test vectors generated */
 }
 

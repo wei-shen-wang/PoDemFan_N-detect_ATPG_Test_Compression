@@ -257,12 +257,13 @@ private:
 	bool dynamic_test_compression = false;
 	bool static_test_compression = false;
 	bool fault_order_by_scoap = false;
-	int flow = 0;		 // 0: original, 1: n=1->n=8
-	int seed = 0;		 // -1: increase, other: specify fixed
-	int stctime = 0; // STC fsim, 0: reverse, 1: random
+	int flow = 0;	 // 0: original, 1: n=1->n=8
+	int seed = 20; // -1: increase, other: specify fixed
+	int stctime = -5;
 	int select_fault_try = 100;
-	int stcseed = 7;
-	int stcmul = 3;
+	int stcseed = 26;
+
+	int stcmul = 19;
 	// podex parameter
 	int podemx_backtrack_limit = 50;
 	int flist_type = 3; // 1: queue, 2: stack, 3: backtrace PO
