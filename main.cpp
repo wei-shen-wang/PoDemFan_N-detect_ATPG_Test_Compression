@@ -94,17 +94,21 @@ int main(int argc, char *argv[])
 	}
 
 	// command for fsim
-	std::string commandFanFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./fan.pat " + inputCktFile + "> fan_sim.rpt)";
+	std::string commandFanFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./fan.pat " + inputCktFile + "> fan_sim.rpt ; echo " + "FAN finish >&2 ; wait)";
 	commandFan += commandFanFsim;
-	std::string commandPodemFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./podem.pat " + inputCktFile + "> podem_sim.rpt) &";
+	std::string commandPodemFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./podem.pat " + inputCktFile + "> podem_sim.rpt ; echo " + "PODEM finish >&2) &";
 	commandPodem += commandPodemFsim;
 	// execute the command
 	// std::cout << commandPodem << '\n';
 	// std::cout << commandFan << '\n';
-	std::system(commandPodem.c_str());
-	std::system(commandFan.c_str());
+	std::string commandATPG = "(" + commandPodem + commandFan + ") && echo ATPG finish >&2";
+	// std::cerr << commandATPG << '\n';
+	std::system(commandATPG.c_str());
 
-	// Extract TL and FC
+	auto t_atpg = std::chrono::high_resolution_clock::now();
+	double atpg_time_s = std::chrono::duration<double>(t_atpg - t_start).count();
+
+	// Extract TL and FC and RT
 	std::string line;
 
 	int fanTL;
@@ -165,18 +169,55 @@ int main(int argc, char *argv[])
 	std::cout << "# Fault Coverage : " << podemFC << "%\n";
 	filePodem.close();
 
+	double fanRT;
+	std::ifstream fileFanRT("./fan.pat", std::ifstream::in);
+	if (!fileFanRT)
+	{
+		std::cerr << "Cannot open input file";
+	}
+	for (int i = 0; i < 64; i++)
+	{
+		fileFanRT.ignore(1000, '\n');
+	}
+	fileFanRT >> line;
+	fileFanRT >> line;
+	fileFanRT >> line;
+	fileFanRT >> line;
+	fanRT = atof(line.c_str());
+	fileFanRT.close();
+
+	FILE *filePodemRT;
+	filePodemRT = fopen("./podem.pat", "r");
+	if (filePodemRT == NULL)
+	{
+		perror("fopen");
+	}
+	fseek(filePodemRT, 0, SEEK_END);
+	int pos = ftell(filePodemRT);
+	while (pos)
+	{
+		fseek(filePodemRT, --pos, SEEK_SET);
+		// std::cerr << (char)fgetc(filePodemRT) << '\n';
+		if ((char)fgetc(filePodemRT) == ' ')
+		{
+			break;
+		}
+	}
+	char podemRT[10];
+	fgets(podemRT, 10, filePodemRT);
+
 	std::cout << '\n';
 	// Choose pattern file
 	std::ifstream fileOut;
 	if (fanFC > podemFC)
 	{
-		std::cout << "Choose FAN pattern...\n\n";
+		std::cout << "# Choose FAN pattern...\n\n";
 		fileOut.open("./fan.pat", std::ifstream::out);
 		std::cout << fileOut.rdbuf();
 	}
 	else if (podemFC > fanFC)
 	{
-		std::cout << "Choose PODEM pattern...\n\n";
+		std::cout << "# Choose PODEM pattern...\n\n";
 		fileOut.open("./podem.pat", std::ifstream::out);
 		std::cout << fileOut.rdbuf();
 	}
@@ -184,23 +225,24 @@ int main(int argc, char *argv[])
 	{
 		if (fanTL < podemTL)
 		{
-			std::cout << "Choose FAN pattern...\n\n";
+			std::cout << "# Choose FAN pattern...\n\n";
 			fileOut.open("./fan.pat", std::ifstream::out);
 			std::cout << fileOut.rdbuf();
 		}
 		else if (podemTL < fanTL)
 		{
-			std::cout << "Choose PODEM pattern...\n\n";
+			std::cout << "# Choose PODEM pattern...\n\n";
 			fileOut.open("./podem.pat", std::ifstream::out);
 			std::cout << fileOut.rdbuf();
 		}
 		else
 		{
-			std::cout << "Choose PODEM pattern (both are good)...\n\n";
+			std::cout << "# Choose PODEM pattern (both are good)...\n\n";
 			fileOut.open("./podem.pat", std::ifstream::out);
 			std::cout << fileOut.rdbuf();
 		}
 	}
+	fileOut.close();
 
 	std::string commandRf;
 	commandRf = "rm fan.pat";
@@ -214,7 +256,10 @@ int main(int argc, char *argv[])
 
 	auto t_end = std::chrono::high_resolution_clock::now();
 	double elapsed_time_s = std::chrono::duration<double>(t_end - t_start).count();
-	std::cout << "Runtime : " << elapsed_time_s << " s\n";
+	std::cout << "# FAN ATPG runtime : " << fanRT << " s\n";
+	std::cout << "# PODEM ATPG runtime : " << podemRT;
+	std::cout << "# ATPG runtime : " << atpg_time_s << " s\n";
+	std::cout << "# Total runtime : " << elapsed_time_s << " s\n";
 
 	return 0;
 }
