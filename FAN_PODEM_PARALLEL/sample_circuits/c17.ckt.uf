@@ -1,0 +1,665 @@
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+primary input: 1GAT(0)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 1
+
+primary input: 2GAT(1)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 2
+
+primary input: 2GAT(1)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 3
+
+gate: g2 ;input wire name: 3GAT(2)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 4
+
+gate: g2 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 5
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 6
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 3GAT(2)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 8
+
+primary input: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 9
+
+primary input: 6GAT(3)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 10
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+primary input: 7GAT(4)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 13
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 15
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 17
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 19
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 20
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 22
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 24
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g5 ;input wire name: 16GAT(8)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 26
+
+gate: g5 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 27
+
+gate: g4 ;output wire name: 16GAT(8)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 28
+
+gate: g4 ;output wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 29
+
+gate: g5 ;output wire name: 23GAT(9)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 30
+
+gate: g5 ;output wire name: 23GAT(9)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 31
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 33
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
+primary input: 1GAT(0)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 0
+
+gate: g1 ;input wire name: 3GAT(2)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 7
+
+primary input: 6GAT(3)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 11
+
+primary input: 7GAT(4)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 12
+
+gate: g4 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 14
+
+gate: g3 ;input wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 16
+
+gate: g1 ;output wire name: 11GAT(5)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 18
+
+gate: g2 ;output wire name: 10GAT(6)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 21
+
+gate: g3 ;output wire name: 19GAT(7)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 23
+
+gate: g6 ;input wire name: 16GAT(8)
+fault_type = s-a-0
+detection flag = aborted
+fault no. = 25
+
+gate: g6 ;output wire name: 22GAT(10)
+fault_type = s-a-1
+detection flag = aborted
+fault no. = 32
+
