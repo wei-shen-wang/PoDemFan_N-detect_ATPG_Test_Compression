@@ -94,9 +94,9 @@ int main(int argc, char *argv[])
 	}
 
 	// command for fsim
-	std::string commandFanFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./fan.pat " + inputCktFile + "> fan_sim.rpt ; echo " + "FAN finish >&2 ; wait)";
+	std::string commandFanFsim = ";./PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./fan.pat " + inputCktFile + "> fan_sim.rpt ; echo " + "FAN finish >&2 ; wait)";
 	commandFan += commandFanFsim;
-	std::string commandPodemFsim = ";../PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./podem.pat " + inputCktFile + "> podem_sim.rpt ; echo " + "PODEM finish >&2) &";
+	std::string commandPodemFsim = ";./PODEM/src/atpg -ndet " + std::to_string(ndet) + " -tdfsim ./podem.pat " + inputCktFile + "> podem_sim.rpt ; echo " + "PODEM finish >&2) &";
 	commandPodem += commandPodemFsim;
 	// execute the command
 	// std::cout << commandPodem << '\n';
