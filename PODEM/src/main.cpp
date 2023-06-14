@@ -55,6 +55,12 @@ int main(int argc, char *argv[])
 			atpg.set_SCOAP(true);
 			i += 1;
 		}
+		else if (strcmp(argv[i], "-compression") == 0)
+		{
+			atpg.set_DTC(true);
+			atpg.set_STC(true);
+			i += 1;
+		}
 		else if (strcmp(argv[i], "-dtc") == 0)
 		{
 			atpg.set_DTC(true);
