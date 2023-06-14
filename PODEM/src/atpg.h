@@ -70,14 +70,11 @@ public:
 	void read_vectors(const string &);
 	void set_total_attempt_num(const int &);
 	void set_backtrack_limit(const int &);
-	void set_fault_try(const int &);
 	void set_SCOAP(const bool &);
 	void set_DTC(const bool &);
 	void set_STC(const bool &);
 	void set_SAF_atpg(const bool &);
 	void set_podemx_fail_limit(const int &);
-	void set_podemx_flist_type(const int &);
-	void set_podemx_chance(const int &);
 	void set_podemx_backtrack_limit(const int &);
 	void set_flow(const int &);
 	void set_seed(const int &);
@@ -257,18 +254,15 @@ private:
 	bool dynamic_test_compression = false;
 	bool static_test_compression = false;
 	bool fault_order_by_scoap = false;
-	int flow = 0;	 // 0: original, 1: n=1->n=8
-	int seed = 20; // -1: increase, other: specify fixed
+	int flow = 1;	 // 0: original, 1: n=1->n=8
+	int seed = 14; // -1: increase, other: specify fixed
 	int stctime = -5;
 	int select_fault_try = 100;
-	int stcseed = 26;
-
-	int stcmul = 19;
+	int stcseed = 7;
+	int stcmul = 3;
 	// podex parameter
 	int podemx_backtrack_limit = 50;
-	int flist_type = 3; // 1: queue, 2: stack, 3: backtrace PO
 	int fail_continuous_limit = 1000000;
-	int chance = 8;
 
 	/* TDF atpg */
 	bool SAF_atpg = false;
@@ -286,7 +280,6 @@ private:
 	void undo_shift();
 	void calculate_scoap();
 	void fault_reorder();
-	void tdf_podemx();
 	void tdf_podemx_bt(); // backtrace from unknown PO to select sec. fault
 	int tdf_podemx_secondary(fptr);
 
@@ -319,8 +312,7 @@ private:
 		//  the following functions control/observe the state of wire
 		//  HCY 2020/2/6
 		void set_(int type) { flag |= type; }
-		void set_scheduled() { flag |= 1; } // Set scheduled when the input of the gate driving it change.
-		// void set_all_assigned() { flag |= 2; }		// Set all assigned if both assign 0 and assign 1 already tried.
+		void set_scheduled() { flag |= 1; }				// Set scheduled when the input of the gate driving it change.
 		void set_input() { flag |= 4; }						// Set input if the wire is PI.
 		void set_output() { flag |= 8; }					// Set output if the wire is PO.
 		void set_marked() { flag |= 16; }					// Set marked when the wire is already leveled.
@@ -329,7 +321,6 @@ private:
 		void set_changed() { flag |= 128; }				// Set changed if the logic value on this wire has recently been changed.
 		void remove_(int type) { flag &= ~type; }
 		void remove_scheduled() { flag &= ~1; }
-		// void remove_all_assigned() { flag &= ~2; }
 		void remove_input() { flag &= ~4; }
 		void remove_output() { flag &= ~8; }
 		void remove_marked() { flag &= ~16; }

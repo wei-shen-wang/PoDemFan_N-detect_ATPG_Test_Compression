@@ -122,6 +122,8 @@ void ATPG::test()
 
 	/* TDF test generation mode */
 	cur_i = 1;
+	ncktwire = sort_wlist.size();
+	ncktin = cktin.size();
 	if (flow == 1)
 	{
 		while (cur_i <= detected_num)

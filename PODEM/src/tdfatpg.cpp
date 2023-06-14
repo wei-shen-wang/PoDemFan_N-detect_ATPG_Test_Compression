@@ -13,15 +13,9 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 	int attempt_num = 0; // counts the number of pattern generated so far for the given fault
 
 	/* initialize all circuit wires to unknown */
-	ncktwire = sort_wlist.size();
-	ncktin = cktin.size();
 	for (i = 0; i < ncktwire; i++)
 	{
 		sort_wlist[i]->value = U;
-	}
-	if (ncktin == 32)
-	{
-		select_fault_try = 15;
 	}
 	current_backtracks = 0;
 	no_of_backtracks = 0;
@@ -342,16 +336,8 @@ int ATPG::tdf_podem(const fptr fault, int &current_backtracks)
 	{
 		if (dynamic_test_compression)
 		{
-			if (flist_type == 3)
-			{
 				tdf_podemx_bt();
-			}
-			else
-			{
-				tdf_podemx();
-			}
 		}
-
 		for (i = 0; i < ncktin; i++)
 		{
 			switch (cktin[i]->value)
@@ -489,162 +475,17 @@ void ATPG::undo_shift()
 		sort_wlist[i]->value = U;
 	}
 }
-
-void ATPG::tdf_podemx()
-{
-	int U_PO_idx = 0;
-	queue<fptr> flist_sec_q;
-	stack<fptr> flist_sec_s;
-
-	switch (flist_type)
-	{
-		case 1:
-			for (fptr fptr_ele : flist_undetect)
-			{
-				if (fptr_ele->detect != REDUNDANT && (fptr_ele->detected_time >= cur_i - chance))
-				{
-					flist_sec_q.push(fptr_ele);
-				}
-			}
-			if (flist_sec_q.empty())
-			{
-				return;
-			}
-			break;
-		case 2:
-			for (fptr fptr_ele : flist_undetect)
-			{
-				if (fptr_ele->detect != REDUNDANT && (fptr_ele->detected_time >= cur_i - chance))
-				{
-					flist_sec_s.push(fptr_ele);
-				}
-			}
-			if (flist_sec_s.empty())
-			{
-				return;
-			}
-			break;
-		case 3:
-			cerr << "should call tdf_podemx_bt()\n";
-			return;
-	}
-
-	int continuous_fail_count = 0;
-	while (continuous_fail_count < fail_continuous_limit)
-	{
-		// terminating condition: 1. no unknown PO,
-		// 2. check unknown PO still exist
-		while (U_PO_idx < cktout.size())
-		{
-			if (cktout[U_PO_idx]->value == U)
-			{
-				break;
-			}
-			U_PO_idx++;
-		}
-		if (U_PO_idx == cktout.size())
-		{
-			return;
-		}
-		fptr f_secondary = nullptr;
-		switch (flist_type)
-		{
-			case 1:
-				if (flist_sec_q.empty())
-				{
-					return;
-				}
-				f_secondary = flist_sec_q.front();
-				flist_sec_q.pop();
-				break;
-			case 2:
-				if (flist_sec_s.empty())
-				{
-					return;
-				}
-				f_secondary = flist_sec_s.top();
-				flist_sec_s.pop();
-				break;
-			case 3:
-				cerr << "should call tdf_podemx_bt()\n";
-				return;
-		}
-
-		for (int i = 0; i < ncktin; i++)
-		{
-			switch (cktin[i]->value)
-			{
-				case 0:
-				case 1:
-				case U:
-					break;
-				case D:
-					cktin[i]->value = 1;
-					break;
-				case D_bar:
-					cktin[i]->value = 0;
-					break;
-			}
-		}
-		switch (last_bit)
-		{
-			case 0:
-			case 1:
-			case U:
-				break;
-			case D:
-				last_bit = 1;
-				break;
-			case D_bar:
-				last_bit = 0;
-				break;
-		}
-		switch (new_bit)
-		{
-			case 0:
-			case 1:
-			case U:
-				break;
-			case D:
-				new_bit = 1;
-				break;
-			case D_bar:
-				new_bit = 0;
-				break;
-		}
-
-		for (int i = 0; i < ncktin; ++i)
-			sort_wlist[i]->set_changed();
-		for (int i = ncktin; i < ncktwire; ++i)
-			sort_wlist[i]->value = U;
-
-		sim();
-		switch (tdf_podemx_secondary(f_secondary))
-		{
-			case TRUE:
-				continuous_fail_count = 0;
-				break;
-			default:
-				continuous_fail_count++;
-				break;
-		}
-	}
-}
-
 void ATPG::tdf_podemx_bt()
 {
-	if (flist_type != 3)
-	{
-		cerr << "should call tdf_podemx()\n";
-		return;
-	}
-	double start_t = ((double)clock());
 	int U_PO_idx = 0;
 	for (fptr fptr_ele : flist_undetect)
 	{
 		fptr_ele->tried_dtc = false;
 	}
-
+	if (ncktin <= 32)
+	{
+		select_fault_try = 15;
+	}
 	int continuous_fail_count = 0;
 	while (continuous_fail_count < fail_continuous_limit)
 	{
@@ -673,7 +514,6 @@ void ATPG::tdf_podemx_bt()
 
 		q_wire.push(unknown_PO);
 		int sl = 0;
-
 		while (!PO_filled)
 		{
 			while (q_fault.empty() && sl++ < select_fault_try)
@@ -696,7 +536,7 @@ void ATPG::tdf_podemx_bt()
 					{
 						for (fptr f : q_wire.front()->udflist)
 						{
-							if (f->detect != REDUNDANT && f->tried_dtc != true && (f->detected_time >= cur_i - chance))
+							if (f->detect != REDUNDANT && f->tried_dtc != true)
 							{
 								q_fault.push(f);
 							}

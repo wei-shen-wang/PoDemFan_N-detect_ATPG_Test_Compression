@@ -169,11 +169,9 @@ bool ATPG::tdfault_sim_a_vector2(const string &vec, int &num_of_current_detect)
 			}
 			else
 			{
-
 				/* if f is an gate output fault */
 				if (f->io == GO)
 				{
-
 					/* if this wire is not yet marked as faulty, mark the wire as faulty
 					 * and insert the corresponding wire to the list of faulty wires. */
 					if (!(sort_wlist[f->to_swlist]->is_faulty()))
@@ -393,10 +391,7 @@ void ATPG::generate_tdfault_list()
 		num_of_gate_fault += f->eqv_fault_num; // accumulate total fault count
 		flist_undetect.push_front(f.get());		 // initial undetected fault list contains all faults
 		flist.push_front(move(f));						 // push into the fault list
-		if (flist_type == 3)
-		{
-			sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
-		}
+		sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
 
 		/* for each gate, create a gate output stuck-at one (SA1) fault */
 		f = move(fptr_s(new (nothrow) FAULT));
@@ -433,10 +428,7 @@ void ATPG::generate_tdfault_list()
 		num_of_gate_fault += f->eqv_fault_num;
 		flist_undetect.push_front(f.get());
 		flist.push_front(move(f));
-		if (flist_type == 3)
-		{
-			sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
-		}
+		sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
 		/*if w has multiple fanout branches */
 		if (w->onode.size() > 1)
 		{
@@ -471,10 +463,7 @@ void ATPG::generate_tdfault_list()
 						num_of_gate_fault++;
 						flist_undetect.push_front(f.get());
 						flist.push_front(move(f));
-						if (flist_type == 3)
-						{
-							sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
-						}
+						sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
 						break;
 				}
 				/* create SA1 for AND NAND EQV XOR gate inputs  */
@@ -504,10 +493,7 @@ void ATPG::generate_tdfault_list()
 						num_of_gate_fault++;
 						flist_undetect.push_front(f.get());
 						flist.push_front(move(f));
-						if (flist_type == 3)
-						{
-							sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
-						}
+						sort_wlist[flist_undetect.front()->to_swlist]->udflist.push_front(flist_undetect.front());
 						break;
 				}
 			}
@@ -740,9 +726,6 @@ void ATPG::random_order_fault_sim()
 		flist_undetect.push_front(f.get());
 	}
 	int current_detect_num = 0;
-	// std::vector<int> ord(vectors.size());
-	// std::iota(ord.begin(), ord.end(), 0);
-	// std::shuffle(ord.begin(), ord.end(), std::mt19937{std::random_device{}()});
 	std::shuffle(vectors.begin(), vectors.end(), std::mt19937{stcseed});
 	stcseed = (stcmul * stcseed) % 20001019;
 	for (int i = 0; i < vectors.size(); i++)
