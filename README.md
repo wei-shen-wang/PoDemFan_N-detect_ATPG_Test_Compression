@@ -14,7 +14,7 @@ Command :
 Implement and modify the PODEM algorithm to generate patterns for transition delay fault.
 This part is done by [Hsin-Tzu Chang](https://github.com/EE08053).
 
-In this part, we modified the source code of PODEM provided by the VLSI Testing course in National Taiwan University and implemented the $N$-detect transition delay fault ATPG. For the detailed modification, please refer to the Apendix.
+In this part, we modified the source code of PODEM provided by the VLSI Testing course in National Taiwan University and implemented the $N$-detect transition delay fault ATPG. For the detailed modification, please refer to the Appendix.
 
 ![](https://hackmd.io/_uploads/ByoGh6dw3.png)
 The following paragraphs introduce four main parts of the program:
@@ -116,7 +116,7 @@ PODEM V1 + FAN V2 :
 
 ## Appendix
 ### PODEM
-Specification of modifed parts from the  source code of PODEM provided by the VLSI Testing course in National Taiwan University.
+Specification of modified parts from the  source code of PODEM provided by the VLSI Testing course in National Taiwan University.
 
 - New file: `tdfatpg.cpp`
 - Modified files:
