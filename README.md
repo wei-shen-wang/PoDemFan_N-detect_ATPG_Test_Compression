@@ -1,9 +1,9 @@
-# ATPG_TDF_ndetect_compression
+# PoDemFan_N-detect_ATPG_Test_Compression
 2023 VLSI Testing Final Project
 
-In all three directories FAN_PODEM_PARALLEL, FANV2_PODEMV1, PODEM
-- type make to compile the code into executables
-- type make clean to clean the executables
+In all three directories `FAN_PODEM_PARALLEL`, `FANV2_PODEMV1`, `PODEM`
+- type `make` to compile the code into executables
+- type `make clean` to clean the executables
 
 Command :
 ```sh
@@ -11,7 +11,7 @@ Command :
 ```
 ## PODEM
 
-Implement and modify the PODEM algorothim to generate patterns for transition delay fault.
+Implement and modify the PODEM algorithm to generate patterns for transition delay fault.
 This part is done by [Hsin-Tzu Zhang](https://github.com/EE08053).
 
 ## PODEM V1 + FAN V2
@@ -27,9 +27,9 @@ In this part, we implement FAN ATPG utilizing the open source code FAN_ATPG. The
 
 There are two flows we implemented.
 
-The first and default flow is v1 first test pattern generation. It involves using the PODEM algoritm to generate V1 first, and then we shift the pattern and do logic simulation. With some gates' values specified, we use the values as a constraint and use the FAN algorothim to generate V2.
+The first and default flow is v1 first test pattern generation. It involves using the PODEM algorithm to generate V1 first, and then we shift the pattern and do logic simulation. With some gates' values specified, we use the values as a constraint and use the FAN algorithm to generate V2.
 
-The second and backup flow is v2 first test pattern generation. It involves using the FAN algoritm to generate V2 first, and then we shift back the pattern and do logic simulation. With some gates' values specified, we use the values as a constraint and use the PODEM algorothim to generate V1.
+The second and backup flow is v2 first test pattern generation. It involves using the FAN algorithm to generate V2 first, and then we shift back the pattern and do logic simulation. With some gates' values specified, we use the values as a constraint and use the PODEM algorithm to generate V1.
 
 As for the modified details, please scroll to the bottom of this readme or take a direct look at the source codes.
 
@@ -229,9 +229,6 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV1_by_PODEM_first(Fault 
 
 			while (pObjectGate->gateId_ >= pCircuit_->numPI_)
 			{
-				// std::cerr << "gate id " << pObjectGate->gateId_ << "\n";
-				// std::cerr << "gate fanin id " << reinitializedCircuit.circuitGates_[pObjectGate->faninVector_[0]].gateId_ << "\n";
-				// exit(0);
 				pNextObjectGate = NULL;
 				// choose object gate index
 				switch (pObjectGate->gateType_)
@@ -536,9 +533,6 @@ Basically we just make a copy of ATPG of the current ATPG and try to generated V
 ```c++
 Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV2_by_FAN_second(Fault targetFault, Pattern &pattern, bool isAtStageDTC)
 {
-	static int functionCall = 0;
-	++functionCall;
-	// std::cerr << functionCall << " generateTDFV2_by_FAN_second start\n";
 	Circuit reinitializedCircuit = *(this->pCircuit_);
 	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
 	Atpg reinitializedAtpg = Atpg(&reinitializedCircuit, &reinitializedSimulator);
