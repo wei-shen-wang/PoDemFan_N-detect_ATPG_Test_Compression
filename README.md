@@ -16,7 +16,7 @@ This part is done by [Hsin-Tzu Zhang](https://github.com/EE08053).
 
 ## PODEM V1 + FAN V2
 
-Implement FAN to generate V2 and PODEM to generate V1 for transition delay faults. 
+Implement FAN to generate V2 and PODEM to generate V1 for transition delay faults.
 This part is done by [Wei-Shen Wang](https://github.com/wei-shen-wang).
 
 The circuit ckt-to-verilog conversion for FAN_ATPG is done by [Hsin-Tzu Zhang](https://github.com/EE08053) and [Yu-Hung Pan](https://github.com/PAN-YU-HUNG).
@@ -25,7 +25,7 @@ The modified command line is done by [Yu-Hung Pan](https://github.com/PAN-YU-HUN
 
 In this part, we implement FAN ATPG utilizing the open source code FAN_ATPG. The original open source code only generate pattern set for stuck-at faults. Therefore, we need to implement transition-delay-fault LOS ATPG by adding some functions to the open source code. Following are some important codes and functions.
 
-There are two flows we implemented. 
+There are two flows we implemented.
 
 The first and default flow is v1 first test pattern generation. It involves using the PODEM algoritm to generate V1 first, and then we shift the pattern and do logic simulation. With some gates' values specified, we use the values as a constraint and use the FAN algorothim to generate V2.
 
@@ -59,28 +59,28 @@ Ndet : **8**, Compression : **ON**
 PODEM :
 | Circuit | FC(%) | TL | RT(s) |
 | :----: | :----: | :----: | :----: |
-|c432|11.62% |170 |0.8|
-|c499|94.69%|582|16.6|
-|c880|50.38%|299|8.7|
-|c1355|38.41%|463|5.0|
-|c2670|94.06%|874|60.3|
-|c3540|23.26%|486|76.8|
-|c6288|97.63%|387|75.2|
-|c7522|98.31%|1199|433.5|
-|Average|63.55%|557.5 |84.6|
+|c432|11.62% |170 |0.1|
+|c499|94.69%|582|2.7|
+|c880|50.38%|299|1.6|
+|c1355|38.41%|463|1.0|
+|c2670|94.06%|874|13.8|
+|c3540|23.26%|486|16.3|
+|c6288|97.63%|387|20.3|
+|c7522|98.31%|1199|103.0|
+|Average|63.55%|557.5 |19.9|
 
 PODEM V1 + FAN V2 :
 | Circuit | FC(%) | TL | RT(s) |
 | :----: | :----: | :----: | :----: |
-|c432|11.62%|170|0.51|
-|c499|95.56%|394|7.28|
-|c880|50.33%|368|22.28|
-|c1355|38.41%|469|7.45|
-|c2670|94.13%|883|428|
-|c3540|23.26%|495|190.4|
-|c6288|97.66%|375|322.7|
-|c7522|98.21%|1945|1176|
-|Average|63.65%|637.4|269.3|
+|c432|11.62%|170|0.5|
+|c499|95.56%|394|7.3|
+|c880|50.33%|368|21.9|
+|c1355|38.41%|469|7.3|
+|c2670|94.13%|883|422.9|
+|c3540|23.26%|495|182.7|
+|c6288|97.66%|375|328.2|
+|c7522|98.21%|1945|1139|
+|Average|63.65%|637.4|263.7|
 
 ## Appendix
 As shown in the following code, we try V1 first pattern generation as default(`generateTDFV1_by_PODEM_first`). If the default flow fail, we try V2 first pattern generation(`generateSinglePatternOnTargetTDF`).
@@ -542,14 +542,14 @@ Atpg::SINGLE_PATTERN_GENERATION_STATUS Atpg::generateTDFV2_by_FAN_second(Fault t
 	Circuit reinitializedCircuit = *(this->pCircuit_);
 	Simulator reinitializedSimulator = Simulator(&reinitializedCircuit);
 	Atpg reinitializedAtpg = Atpg(&reinitializedCircuit, &reinitializedSimulator);
-	int backwardImplicationLevel = 0;													
-	int numOfBacktrack = 0;																
-	bool Finish = false;																
-	bool faultHasPropagatedToPO = false;											 
-	Gate *pFaultyLine = NULL;														
-	Gate *pLastDFrontier = NULL;													
-	IMPLICATION_STATUS implicationStatus;											
-	BACKTRACE_STATUS backtraceFlag;													
+	int backwardImplicationLevel = 0;
+	int numOfBacktrack = 0;
+	bool Finish = false;
+	bool faultHasPropagatedToPO = false;
+	Gate *pFaultyLine = NULL;
+	Gate *pLastDFrontier = NULL;
+	IMPLICATION_STATUS implicationStatus;
+	BACKTRACE_STATUS backtraceFlag;
 	SINGLE_PATTERN_GENERATION_STATUS genStatus = TDF_V2_FOUND;
 	std::vector<bool> gateID2changed(reinitializedCircuit.numGate_, false);
 	std::vector<bool> gateID2scheduled(reinitializedCircuit.numGate_, false);
