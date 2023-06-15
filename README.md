@@ -12,14 +12,46 @@ Command :
 ## PODEM
 
 Implement and modify the PODEM algorithm to generate patterns for transition delay fault.
-This part is done by [Hsin-Tzu Zhang](https://github.com/EE08053).
+This part is done by [Hsin-Tzu Chang](https://github.com/EE08053).
+
+In this part, we modified the source code of PODEM provided by the VLSI Testing course in National Taiwan University and implemented the $N$-detect transition delay fault ATPG. For the detailed modification, please refer to the Apendix.
+
+![](https://hackmd.io/_uploads/ByoGh6dw3.png)
+The following paragraphs introduce four main parts of the program:
+
+### Primary Fault Test Pattern Generation
+For primary fault test pattern generation, we introduce two boolean flags, valid\_v1 and valid\_v2, to keep track of the states of V1 and V2 generation.
+
+For a selected fault, we backtrace one level for fault activation and fault detection respectively. If a conflict occurs, the test generation fails. If no conflict occurs, we set valid\_v1 (valid\_v2) to true if the fault has been activated, and false if it hasn't.
+
+Next, several rounds of concurrent backtrack are applied. We apply backtrack between the two decision trees according to the value of flags. The procedure is repeated until a test is successfully generated or the program reaches the user defined backtrack limit.
+
+By performing concurrent backtrack, the algorithm has higher flexibility and is more likely to generate valid test patterns.
+
+### Primary Fault Selection
+We implement two flows for selecting the primary fault for each round. 
+In flow 1, we repeatedly choose the same fault until it is $N$-detected or the ATPG fails to generate test patterns. 
+
+In flow 2 (default), the process involves $N$ rounds of test pattern generation, from $K = 1$ to $K = N$. For each round, we traverse the fault list and only select the fault with a current detected time exactly equal to $K-1$. Note that the detections in DTC are also taken into account.
+
+### Dynamic Test Compression
+We apply the PODEM-X algorithm for DTC. In order to improve runtime, the test pattern generation for secondary faults is simplified. We generate V2 first and then generate V1 based on V2. If V1 fails, no backtracking is applied on V2.
+
+For the secondary fault selection, we choose a primary output (PO) with an unknown value and apply a breadth-first search (BFS) starting from the selected PO. Candidate faults are pushed into a queue and tried in order.
+
+### Static Test Compression
+First we apply reverse order fault simulation to remove redundant test patterns. This greatly reduces the test length. 
+
+For further improvement, we apply several times of random order fault simulation. For each round, we do fault simulation for each pattern with random order and remove the redundant faults. 
+
+This procedure would be repeated until there is no further improvement for 5 consecutive rounds.
 
 ## PODEM V1 + FAN V2
 
 Implement FAN to generate V2 and PODEM to generate V1 for transition delay faults.
 This part is done by [Wei-Shen Wang](https://github.com/wei-shen-wang).
 
-The circuit ckt-to-verilog conversion for FAN_ATPG is done by [Hsin-Tzu Zhang](https://github.com/EE08053) and [Yu-Hung Pan](https://github.com/PAN-YU-HUNG).
+The circuit ckt-to-verilog conversion for FAN_ATPG is done by [Hsin-Tzu Chang](https://github.com/EE08053) and [Yu-Hung Pan](https://github.com/PAN-YU-HUNG).
 
 The modified command line is done by [Yu-Hung Pan](https://github.com/PAN-YU-HUNG).
 
@@ -57,7 +89,7 @@ Run two ATPG in parallel and choose better generated pattern. This part is done 
 Ndet : **8**, Compression : **ON**
 
 PODEM :
-| Circuit | FC(%) | TL | RT(s) |
+| Circuit | FC | TL | RT(s) |
 | :----: | :----: | :----: | :----: |
 |c432|11.62% |170 |0.1|
 |c499|94.69%|582|2.7|
@@ -70,7 +102,7 @@ PODEM :
 |Average|63.55%|557.5 |19.9|
 
 PODEM V1 + FAN V2 :
-| Circuit | FC(%) | TL | RT(s) |
+| Circuit | FC | TL | RT(s) |
 | :----: | :----: | :----: | :----: |
 |c432|11.62%|170|0.5|
 |c499|95.56%|394|7.3|
@@ -83,6 +115,31 @@ PODEM V1 + FAN V2 :
 |Average|63.65%|637.4|263.7|
 
 ## Appendix
+### PODEM
+Specification of modifed parts from the  source code of PODEM provided by the VLSI Testing course in National Taiwan University.
+
+- New file: `tdfatpg.cpp`
+- Modified files:
+    - `main.cpp`
+        - Add command line flags
+    - `atpg.cpp`
+        - Modify `ATPG::test()` for including TDF ATPG
+        - Modify `backtrack_limit`
+   - `tdfsim.cpp`
+       - Modify functions (return `bool` instead of `void`):
+            - `bool tdfault_sim_a_vector(const string &, int &)`
+	        - `bool tdfault_sim_a_vector2(const string &, int &)`
+        - Modify `void ATPG::generate_tdfault_list()` for performing secondary fault selection in dynamic test compression
+        - Add new functions: 
+            - `calculate_scoap() `
+            -  `fault_reorder()`
+            -  `reverse_order_fault_sim()` 
+            - `random_order_fault_sim()`
+    - `atpg.h`
+        - Add specification for new functions and variables
+
+For more detail, please refer to the source code.
+### PODEM V1 + FAN V2
 As shown in the following code, we try V1 first pattern generation as default(`generateTDFV1_by_PODEM_first`). If the default flow fail, we try V2 first pattern generation(`generateSinglePatternOnTargetTDF`).
 
 ```c++
