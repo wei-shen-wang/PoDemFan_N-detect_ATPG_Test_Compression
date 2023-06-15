@@ -1,6 +1,6 @@
 #
 
-CFLAGS = -std=c++11 -g
+CFLAGS = -std=c++11 -Ofast
 
 FILES = main.o
 
